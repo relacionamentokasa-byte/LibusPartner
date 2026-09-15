@@ -1,0 +1,269 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id                   String    @id @default(uuid())
+  name                 String
+  email                String    @unique
+  passwordHash         String
+  role                 String    @default("TECNICO") // ADMIN, GESTOR, TECNICO
+  active               Boolean   @default(true)
+  superiorId           String?
+  superior             User?     @relation("UserHierarchy", fields: [superiorId], references: [id])
+  subordinates         User[]    @relation("UserHierarchy")
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  evaluations          Evaluation[] @relation("TechnicianEvaluations")
+  auditLogs            AuditLog[]
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@map("users")
+}
+
+model Company {
+  id            String       @id @default(uuid())
+  tradeName     String       // Nome Fantasia
+  corporateName String?      // Razão Social
+  cnpj          String?
+  segment       String?      // Indústria, Construção, Mineração, etc.
+  state         String?
+  city          String?
+  contactName   String?
+  contactEmail  String?
+  contactPhone  String?
+  active        Boolean      @default(true)
+  createdById   String?
+  updatedById   String?
+  evaluations   Evaluation[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@map("companies")
+}
+
+model ProductFamily {
+  id          String            @id @default(uuid())
+  name        String            @unique // Proteção da Cabeça, Visual, Auditiva, Facial, Respiratória
+  slug        String            @unique
+  description String?
+  categories  ProductCategory[]
+  createdAt   DateTime          @default(now())
+
+  @@map("product_families")
+}
+
+model ProductCategory {
+  id                 String               @id @default(uuid())
+  familyId           String
+  family             ProductFamily        @relation(fields: [familyId], references: [id])
+  name               String               // Capacetes, Óculos, Abafadores, etc.
+  slug               String
+  libusProducts      LibusProduct[]
+  competitorProducts CompetitorProduct[]
+  attributes         TechnicalAttribute[]
+  createdAt          DateTime             @default(now())
+
+  @@unique([familyId, slug])
+  @@map("product_categories")
+}
+
+model LibusProduct {
+  id             String                 @id @default(uuid())
+  categoryId     String
+  category       ProductCategory        @relation(fields: [categoryId], references: [id])
+  name           String
+  internalCode   String?
+  caNumber       String?
+  description    String?
+  imageUrl       String?
+  active         Boolean                @default(true)
+  equivalences   ProductEquivalence[]
+  attributeValues ProductAttributeValue[]
+  evaluations    EvaluationComparison[]
+  createdAt      DateTime               @default(now())
+
+  @@map("libus_products")
+}
+
+model CompetitorManufacturer {
+  id        String              @id @default(uuid())
+  name      String              @unique // 3M, MSA, Honeywell, Kalipso, etc.
+  products  CompetitorProduct[]
+  active    Boolean             @default(true)
+  createdAt DateTime            @default(now())
+
+  @@map("competitor_manufacturers")
+}
+
+model CompetitorProduct {
+  id             String                 @id @default(uuid())
+  categoryId     String
+  category       ProductCategory        @relation(fields: [categoryId], references: [id])
+  manufacturerId String
+  manufacturer   CompetitorManufacturer @relation(fields: [manufacturerId], references: [id])
+  name           String
+  caNumber       String?
+  description    String?
+  imageUrl       String?
+  active         Boolean                @default(true)
+  equivalences   ProductEquivalence[]
+  attributeValues ProductAttributeValue[]
+  evaluations    EvaluationComparison[]
+  createdAt      DateTime               @default(now())
+
+  @@map("competitor_products")
+}
+
+model ProductEquivalence {
+  id                  String            @id @default(uuid())
+  libusProductId      String
+  libusProduct        LibusProduct      @relation(fields: [libusProductId], references: [id])
+  competitorProductId String
+  competitorProduct   CompetitorProduct @relation(fields: [competitorProductId], references: [id])
+  notes               String?
+  active              Boolean           @default(true)
+  createdAt           DateTime          @default(now())
+
+  @@unique([libusProductId, competitorProductId])
+  @@map("product_equivalences")
+}
+
+model TechnicalAttribute {
+  id          String                  @id @default(uuid())
+  categoryId  String
+  category    ProductCategory         @relation(fields: [categoryId], references: [id])
+  name        String
+  valueType   String                  @default("BOOLEAN") // BOOLEAN, NUMBER, TEXT
+  unit        String?
+  orderIndex  Int                     @default(0)
+  values      ProductAttributeValue[]
+  responses   EvaluationCriterionResponse[]
+  createdAt   DateTime                @default(now())
+
+  @@map("technical_attributes")
+}
+
+model ProductAttributeValue {
+  id                  String              @id @default(uuid())
+  attributeId         String
+  attribute           TechnicalAttribute  @relation(fields: [attributeId], references: [id])
+  libusProductId      String?
+  libusProduct        LibusProduct?       @relation(fields: [libusProductId], references: [id])
+  competitorProductId String?
+  competitorProduct   CompetitorProduct?  @relation(fields: [competitorProductId], references: [id])
+  value               String
+  createdAt           DateTime            @default(now())
+
+  @@map("product_attribute_values")
+}
+
+model Evaluation {
+  id               String                 @id @default(uuid())
+  companyId        String
+  company          Company                @relation(fields: [companyId], references: [id])
+  leadTechnicianId String
+  leadTechnician   User                   @relation("TechnicianEvaluations", fields: [leadTechnicianId], references: [id])
+  status           String                 @default("DRAFT") // DRAFT, IN_PROGRESS, TECHNICAL_DONE, COMPLETED, CANCELLED
+  evaluationDate   DateTime               @default(now())
+  observations     String?
+  createdById      String?
+  updatedById      String?
+  participants     EvaluationParticipant[]
+  comparisons      EvaluationComparison[]
+  createdAt        DateTime               @default(now())
+  updatedAt        DateTime               @updatedAt
+  completedAt      DateTime?
+
+  @@map("evaluations")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userName   String?
+  userEmail  String?
+  userRole   String?
+  action     String   // CREATE, UPDATE, DELETE, COMPLETE, EMISSION, EXPORT_PDF
+  entity     String   // EVALUATION, COMPANY, USER
+  entityId   String
+  details    String?  // JSON ou resumo legível dos detalhes/alterações
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model EvaluationParticipant {
+  id           String     @id @default(uuid())
+  evaluationId String
+  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  name         String
+  roleOrArea   String     // Ex: Operador / Produção, Técnico Segurança, Compras
+  companyName  String?
+  email        String?
+  phone        String?
+  createdAt    DateTime   @default(now())
+
+  @@map("evaluation_participants")
+}
+
+model EvaluationComparison {
+  id                  String                        @id @default(uuid())
+  evaluationId        String
+  evaluation          Evaluation                    @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  libusProductId      String
+  libusProduct        LibusProduct                  @relation(fields: [libusProductId], references: [id])
+  competitorProductId String
+  competitorProduct   CompetitorProduct             @relation(fields: [competitorProductId], references: [id])
+  orderIndex          Int                           @default(0)
+  responses           EvaluationCriterionResponse[]
+  economicResult      EvaluationEconomicResult?
+  createdAt           DateTime                      @default(now())
+
+  @@map("evaluation_comparisons")
+}
+
+model EvaluationCriterionResponse {
+  id              String               @id @default(uuid())
+  comparisonId    String
+  comparison      EvaluationComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  attributeId     String
+  attribute       TechnicalAttribute   @relation(fields: [attributeId], references: [id])
+  libusScore      Int?                 // 1 a 10
+  competitorScore Int?                 // 1 a 10
+  isNotApplicable Boolean              @default(false)
+  observation     String?
+  createdAt       DateTime             @default(now())
+
+  @@unique([comparisonId, attributeId])
+  @@map("evaluation_criterion_responses")
+}
+
+model EvaluationEconomicResult {
+  id                 String               @id @default(uuid())
+  comparisonId       String               @unique
+  comparison         EvaluationComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  currentPrice       Float                // Preço concorrente
+  libusPrice         Float                // Preço Libus
+  quantity           Int                  @default(1) // Quantidade de usuários / postos
+  consumptionPeriod  String               @default("MONTHLY") // MONTHLY / ANNUAL
+  lifespanCurrent    Float                // Vida útil concorrente (em meses ou dias)
+  lifespanLibus      Float                // Vida útil Libus
+  costCurrentTotal   Float                // Custo total calculado concorrente
+  costLibusTotal     Float                // Custo total calculado Libus
+  costDifference     Float                // Custo atual - Custo Libus
+  economyGenerated   Float                // Economia bruta gerada
+  economyPercent     Float                // % de economia
+  notes              String?
+  createdAt          DateTime             @default(now())
+
+  @@map("evaluation_economic_results")
+}

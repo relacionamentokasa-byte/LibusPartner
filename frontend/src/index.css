@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: "Montserrat", "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Ocultar barra de rolagem nativa mantendo funcionalidade de swipe */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+h1, h2, h3, h4, h5, h6, .font-heading {
+  font-family: "Montserrat", sans-serif;
+}
+
+.font-mono, .font-tech {
+  font-family: "Montserrat", -apple-system, BlinkMacSystemFont, sans-serif !important;
+  font-feature-settings: "tnum" 1;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  /* Reset global absoluto para impressão: 100% branco sem bordas, vazamentos ou fundo escuro */
+  *, *::before, *::after {
+    box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 9.5pt !important;
+    line-height: 1.3 !important;
+    font-family: "Montserrat", Arial, Helvetica, sans-serif !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Ocultar barra de navegação, painéis e elementos de tela da aplicação */
+  aside,
+  header.no-print,
+  nav,
+  button,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important;
+    width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  #root,
+  .min-h-screen,
+  main {
+    display: block !important;
+    min-height: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: static !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+  }
+
+  div.bg-\[\#F4F6F8\],
+  div.bg-slate-100,
+  #report-preview-wrapper {
+    background: transparent !important;
+    background-color: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+  }
+
+  /* Posicionar a folha do laudo com texto vetorial selecionável em PDF */
+  #printable-report-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: auto !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 8mm 10mm 8mm 10mm !important;
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    transform: none !important;
+    display: block !important;
+  }
+
+  .print-exact {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .page-break-after {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+}
