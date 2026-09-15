@@ -5,8 +5,33 @@ import { authMiddleware, roleMiddleware } from '../../middlewares/auth.js';
 export const catalogRouter = Router();
 catalogRouter.use(authMiddleware);
 
+// Cache em memória para dados estáticos do catálogo (TTL: 10 minutos)
+const cache = new Map<string, { data: any; expiry: number }>();
+const CACHE_TTL = 10 * 60 * 1000;
+
+function getFromCache(key: string) {
+  const item = cache.get(key);
+  if (item && item.expiry > Date.now()) {
+    return item.data;
+  }
+  cache.delete(key);
+  return null;
+}
+
+function setInCache(key: string, data: any) {
+  cache.set(key, { data, expiry: Date.now() + CACHE_TTL });
+}
+
+export function invalidateCatalogCache() {
+  cache.clear();
+}
+
 // Famílias e Categorias
 catalogRouter.get('/families', async (req: Request, res: Response) => {
+  const cacheKey = 'families';
+  const cached = getFromCache(cacheKey);
+  if (cached) return res.json(cached);
+
   const families = await prisma.productFamily.findMany({
     include: {
       categories: {
@@ -18,12 +43,18 @@ catalogRouter.get('/families', async (req: Request, res: Response) => {
       }
     }
   });
-  return res.json({ families });
+  const responseData = { families };
+  setInCache(cacheKey, responseData);
+  return res.json(responseData);
 });
 
 // Produtos Libus
 catalogRouter.get('/libus-products', async (req: Request, res: Response) => {
   const categoryId = req.query.categoryId as string | undefined;
+  const cacheKey = `libus-products:${categoryId || 'all'}`;
+  const cached = getFromCache(cacheKey);
+  if (cached) return res.json(cached);
+
   const products = await prisma.libusProduct.findMany({
     where: {
       active: true,
@@ -40,13 +71,18 @@ catalogRouter.get('/libus-products', async (req: Request, res: Response) => {
     },
     orderBy: { name: 'asc' }
   });
-  return res.json({ products });
+  const responseData = { products };
+  setInCache(cacheKey, responseData);
+  return res.json(responseData);
 });
 
 // Produtos Concorrentes
 catalogRouter.get('/competitor-products', async (req: Request, res: Response) => {
   const categoryId = req.query.categoryId as string | undefined;
   const manufacturerId = req.query.manufacturerId as string | undefined;
+  const cacheKey = `competitor-products:${categoryId || 'all'}:${manufacturerId || 'all'}`;
+  const cached = getFromCache(cacheKey);
+  if (cached) return res.json(cached);
 
   const products = await prisma.competitorProduct.findMany({
     where: {
@@ -61,12 +97,17 @@ catalogRouter.get('/competitor-products', async (req: Request, res: Response) =>
     },
     orderBy: { name: 'asc' }
   });
-  return res.json({ products });
+  const responseData = { products };
+  setInCache(cacheKey, responseData);
+  return res.json(responseData);
 });
 
 // De-Para / Equivalências
 catalogRouter.get('/equivalences', async (req: Request, res: Response) => {
   const libusProductId = req.query.libusProductId as string | undefined;
+  const cacheKey = `equivalences:${libusProductId || 'all'}`;
+  const cached = getFromCache(cacheKey);
+  if (cached) return res.json(cached);
 
   const equivalences = await prisma.productEquivalence.findMany({
     where: {
@@ -89,7 +130,9 @@ catalogRouter.get('/equivalences', async (req: Request, res: Response) => {
       }
     }
   });
-  return res.json({ equivalences });
+  const responseData = { equivalences };
+  setInCache(cacheKey, responseData);
+  return res.json(responseData);
 });
 
 // Criar produto concorrente customizado ou existente na hora
@@ -203,6 +246,8 @@ catalogRouter.patch('/libus-products/:id/image', roleMiddleware(['ADMIN', 'GESTO
       data: { imageUrl: finalImageUrl }
     });
 
+    invalidateCatalogCache();
+
     return res.json({ product: updated });
   } catch (err: any) {
     return res.status(500).json({ error: err.message || 'Erro ao atualizar foto do produto' });
@@ -258,6 +303,8 @@ catalogRouter.patch('/competitor-products/:id/image', roleMiddleware(['ADMIN', '
       where: { id },
       data: { imageUrl: finalImageUrl }
     });
+
+    invalidateCatalogCache();
 
     return res.json({ product: updated });
   } catch (err: any) {
