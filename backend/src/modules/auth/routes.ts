@@ -51,7 +51,11 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: err.errors[0].message });
     }
-    return res.status(500).json({ error: 'Erro interno ao autenticar' });
+    console.error('Erro detalhado no login:', err);
+    return res.status(500).json({
+      error: 'Erro interno ao autenticar',
+      details: err?.message || String(err)
+    });
   }
 });
 
