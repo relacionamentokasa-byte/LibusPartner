@@ -1,10 +1,6 @@
 import nodemailer from 'nodemailer';
 import path from 'path';
 import fs from 'fs';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export interface SendResetPasswordEmailParams {
   toEmail: string;
@@ -19,8 +15,10 @@ export async function sendResetPasswordEmail({ toEmail, userName, resetLink }: S
   const smtpPass = process.env.SMTP_PASS;
   const smtpFrom = process.env.SMTP_FROM || 'Libus Partner <nao-responda@libus.com.br>';
 
-  const logoBannerPath = path.resolve(__dirname, '../assets/libus_partner_banner.png');
-  const hasLogoBanner = fs.existsSync(logoBannerPath);
+  const logoBannerPath = path.resolve(process.cwd(), 'src/assets/libus_partner_banner.png');
+  const distBannerPath = path.resolve(process.cwd(), 'dist/assets/libus_partner_banner.png');
+  const finalBannerPath = fs.existsSync(distBannerPath) ? distBannerPath : logoBannerPath;
+  const hasLogoBanner = fs.existsSync(finalBannerPath);
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -104,7 +102,7 @@ export async function sendResetPasswordEmail({ toEmail, userName, resetLink }: S
 
       const attachments = hasLogoBanner ? [{
         filename: 'libus_partner_banner.png',
-        path: logoBannerPath,
+        path: finalBannerPath,
         cid: 'libus_partner_banner@libus.com.br'
       }] : [];
 

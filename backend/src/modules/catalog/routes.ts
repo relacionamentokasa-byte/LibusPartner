@@ -193,7 +193,7 @@ catalogRouter.patch('/libus-products/:id/image', roleMiddleware(['ADMIN', 'GESTO
           }
         });
 
-        await image.write(savePath);
+        await (image as any).write(savePath);
         finalImageUrl = `/products/${filename}`;
       }
     }
@@ -249,7 +249,7 @@ catalogRouter.patch('/competitor-products/:id/image', roleMiddleware(['ADMIN', '
           }
         });
 
-        await image.write(savePath);
+        await (image as any).write(savePath);
         finalImageUrl = `/products/${filename}`;
       }
     }

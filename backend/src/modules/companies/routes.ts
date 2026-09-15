@@ -60,7 +60,14 @@ companiesRouter.post('/', async (req: Request, res: Response) => {
     const data = companySchema.parse(req.body);
     const company = await prisma.company.create({
       data: {
-        ...data,
+        tradeName: data.tradeName,
+        corporateName: data.corporateName,
+        cnpj: data.cnpj,
+        segment: data.segment,
+        state: data.state,
+        city: data.city,
+        contactName: data.contactName,
+        contactPhone: data.contactPhone,
         contactEmail: data.contactEmail || null,
         createdById: user.id,
         updatedById: user.id
