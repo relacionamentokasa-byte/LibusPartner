@@ -395,7 +395,7 @@ export const CatalogPage: React.FC = () => {
           <p className="text-xs text-slate-400 mt-1">Ajuste os filtros de família ou termo de busca.</p>
         </div>
       ) : viewMode === 'list' ? (
-        /* VISUALIZAÇÃO EM LISTA: CARDS HORIZONTAIS COMPACTOS DE-PARA (Totalmente responsivo em qualquer tela) */
+        /* VISUALIZAÇÃO EM LISTA: CARDS HORIZONTAIS COMPACTOS DE-PARA (Ergonomia Mobile) */
         <div className="space-y-3">
           {filteredProducts.map((prod) => {
             const eqList = prod.equivalences || [];
@@ -403,21 +403,21 @@ export const CatalogPage: React.FC = () => {
             return (
               <div
                 key={prod.id}
-                className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-xs transition p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3.5"
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-xs transition p-3 sm:p-4 flex flex-col md:flex-row md:items-center justify-between gap-3"
               >
                 {/* Produto Libus Oficial */}
                 <div
                   onClick={() => setSelectedProductDetails(prod)}
-                  className="flex items-center gap-3 md:w-[36%] min-w-0 flex-shrink-0 cursor-pointer group/card hover:opacity-90 transition"
+                  className="flex items-center gap-3 md:w-[38%] min-w-0 flex-shrink-0 cursor-pointer group/card hover:opacity-90 transition"
                   title="Clique para ver a Ficha Técnica Completa"
                 >
                   <div className="relative group/libusimg flex-shrink-0">
-                    <div className="w-13 h-13 sm:w-14 sm:h-14 rounded-xl bg-slate-50/80 p-1 flex items-center justify-center overflow-hidden border border-slate-200 group-hover/card:border-libus-magenta/60 group-hover/card:shadow-xs transition">
+                    <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-slate-50 p-1 flex items-center justify-center overflow-hidden border border-slate-200 group-hover/card:border-libus-magenta/60 group-hover/card:shadow-xs transition">
                       {prod.imageUrl ? (
                         <img
                           src={prod.imageUrl}
                           alt={prod.name}
-                          className="w-full h-full object-contain filter drop-shadow-sm transition group-hover/libusimg:scale-105"
+                          className="w-full h-full max-h-14 sm:max-h-16 object-contain filter drop-shadow-xs transition group-hover/libusimg:scale-105"
                         />
                       ) : (
                         <span className="text-[8px] text-slate-400 font-mono text-center">SEM FOTO</span>
@@ -465,10 +465,10 @@ export const CatalogPage: React.FC = () => {
                 </div>
 
                 {/* Concorrentes Equivalentes Inline */}
-                <div className="flex-1 min-w-0 md:border-l md:border-slate-100 md:pl-3.5">
-                  <div className="flex items-center justify-between mb-1">
+                <div className="flex-1 min-w-0 border-t md:border-t-0 md:border-l border-slate-100 pt-2.5 md:pt-0 md:pl-3.5">
+                  <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                      Equivalências ({eqList.length})
+                      Equivalências de Mercado ({eqList.length})
                     </span>
                   </div>
 
@@ -484,15 +484,15 @@ export const CatalogPage: React.FC = () => {
                         return (
                           <div
                             key={eq.id}
-                            className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-50/90 hover:bg-slate-100 rounded-lg border border-slate-200/80 transition max-w-full"
+                            className="inline-flex items-center gap-1.5 px-2 py-1 bg-slate-50 hover:bg-slate-100 rounded-lg border border-slate-200 transition max-w-full"
                           >
                             <div className="relative group/compimg flex-shrink-0">
-                              <div className="w-6 h-6 rounded bg-white p-0.5 flex items-center justify-center overflow-hidden border border-slate-200">
+                              <div className="w-7 h-7 rounded bg-white p-0.5 flex items-center justify-center overflow-hidden border border-slate-200">
                                 {compImage ? (
                                   <img
                                     src={compImage}
                                     alt={eq.competitorProduct?.name}
-                                    className="w-full h-full object-contain filter drop-shadow-sm"
+                                    className="w-full h-full max-h-7 object-contain filter drop-shadow-2xs"
                                   />
                                 ) : (
                                   <span className="text-[6px] text-slate-400 font-mono">FOTO</span>
@@ -523,7 +523,7 @@ export const CatalogPage: React.FC = () => {
                               ) : (
                                 <span className="text-[8px] font-bold text-slate-500 uppercase flex-shrink-0">{manufName}</span>
                               )}
-                              <span className="font-bold text-slate-800 text-[11px] truncate max-w-[140px]" title={eq.competitorProduct?.name}>
+                              <span className="font-bold text-slate-800 text-[11px] truncate max-w-[120px] sm:max-w-[160px]" title={eq.competitorProduct?.name}>
                                 {eq.competitorProduct?.name}
                               </span>
                               {eq.competitorProduct?.caNumber && (
@@ -554,8 +554,8 @@ export const CatalogPage: React.FC = () => {
           })}
         </div>
       ) : (
-        /* VISUALIZAÇÃO EM GRADE (CARDS) */
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-6 items-start">
+        /* VISUALIZAÇÃO EM GRADE: 2 COLUNAS COMPACTAS NO MOBILE */
+        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5 sm:gap-4 items-start">
           {filteredProducts.map((prod) => {
             const equivalencesCount = prod.equivalences?.length || 0;
             const isExpanded = expandedCardId === prod.id;
@@ -566,35 +566,35 @@ export const CatalogPage: React.FC = () => {
             return (
               <div
                 key={prod.id}
-                className="bg-white rounded-2xl border border-slate-200/90 shadow-xs hover:border-slate-300 hover:shadow-md transition flex flex-col justify-between overflow-hidden group"
+                className="bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-slate-300 hover:shadow-md transition flex flex-col justify-between overflow-hidden group"
               >
-                <div className="p-5 space-y-4">
+                <div className="p-3 sm:p-4 space-y-2.5">
                   {/* Cabeçalho do Card */}
-                  <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                    <span className="text-[10px] font-bold px-2.5 py-1 rounded bg-slate-100 text-slate-700 uppercase font-mono tracking-wider">
+                  <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 uppercase font-mono tracking-wider truncate max-w-[100px]">
                       {prod.category?.family?.name || 'Proteção'}
                     </span>
-                    <span className="text-[10px] font-mono text-slate-400 font-semibold uppercase">
+                    <span className="text-[9px] font-mono text-slate-400 font-semibold uppercase truncate max-w-[80px]">
                       {prod.category?.name}
                     </span>
                   </div>
 
                   {/* Bloco do Produto Libus */}
-                  <div className="flex gap-4 items-start">
+                  <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 items-center sm:items-start text-center sm:text-left">
                     <div
                       onClick={() => setSelectedProductDetails(prod)}
                       className="relative group/img flex-shrink-0 cursor-pointer"
                       title="Ver Ficha Técnica Completa"
                     >
-                      <div className="w-20 h-20 rounded-xl bg-slate-50/50 p-1.5 flex items-center justify-center overflow-hidden border border-slate-200 shadow-2xs group-hover/img:border-libus-magenta/60 group-hover/img:shadow-md transition">
+                      <div className="w-16 h-16 sm:w-18 sm:h-18 rounded-xl bg-slate-50 p-1 flex items-center justify-center overflow-hidden border border-slate-200 shadow-2xs group-hover/img:border-libus-magenta/60 group-hover/img:shadow-xs transition">
                         {prod.imageUrl ? (
                           <img
                             src={prod.imageUrl}
                             alt={prod.name}
-                            className="w-full h-full object-contain filter drop-shadow-sm transition group-hover/img:scale-105"
+                            className="w-full h-full max-h-16 sm:max-h-18 object-contain filter drop-shadow-xs transition group-hover/img:scale-105"
                           />
                         ) : (
-                          <span className="text-[10px] text-slate-400 font-mono">SEM FOTO</span>
+                          <span className="text-[8px] text-slate-400 font-mono">SEM FOTO</span>
                         )}
                       </div>
 
@@ -602,111 +602,98 @@ export const CatalogPage: React.FC = () => {
                       {isManager && (
                         <button
                           onClick={(e) => handleOpenUpload(prod.id, prod.name, true, prod.imageUrl, e)}
-                          className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/img:opacity-100 transition flex flex-col items-center justify-center text-white rounded-xl text-[9px] font-mono font-bold"
+                          className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/img:opacity-100 transition flex flex-col items-center justify-center text-white rounded-xl text-[8px] font-mono font-bold"
                           title="Alterar foto do produto Libus"
                         >
-                          <Camera size={16} className="mb-0.5" />
+                          <Camera size={12} className="mb-0.5" />
                           <span>FOTO</span>
                         </button>
                       )}
                     </div>
 
-                    <div className="space-y-1.5 min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 text-[9px] font-mono font-bold tracking-wider">
-                        <span className="text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-300">
+                    <div className="space-y-1 min-w-0 flex-1 w-full">
+                      <div className="flex items-center justify-center sm:justify-start gap-1 text-[8px] font-mono font-bold tracking-wider flex-wrap">
+                        <span className="text-slate-900 bg-slate-100 px-1 py-0.2 rounded border border-slate-300">
                           LIBUS
                         </span>
                         {prod.internalCode && (
-                          <span className="text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200/80">
+                          <span className="text-slate-600 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/80">
                             CÓD: {prod.internalCode}
                           </span>
                         )}
                       </div>
                       <div
                         onClick={() => setSelectedProductDetails(prod)}
-                        className="cursor-pointer group/title flex items-center gap-1.5"
+                        className="cursor-pointer group/title"
                         title="Ver Ficha Técnica Completa"
                       >
-                        <h3 className="text-base font-black text-slate-900 leading-snug break-words group-hover/title:text-libus-magenta transition">
+                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight line-clamp-2 group-hover/title:text-libus-magenta transition">
                           {prod.name}
                         </h3>
-                        <Info size={14} className="text-slate-400 group-hover/title:text-libus-magenta flex-shrink-0" />
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                      <div className="flex items-center justify-center sm:justify-start gap-1 flex-wrap pt-0.5">
                         {prod.caNumber && (
-                          <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono font-bold border border-slate-200/80">
+                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono font-bold border border-slate-200/80">
                             CA {prod.caNumber}
                           </span>
                         )}
-                        <span className="text-[10px] text-slate-500 font-medium">
-                          • {equivalencesCount} {equivalencesCount === 1 ? 'concorrente' : 'concorrentes'}
+                        <span className="text-[9px] text-slate-500 font-medium">
+                          • {equivalencesCount} eq.
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* Descritivo Técnico Completo com Ação de Clique */}
-                  {prod.description && (
-                    <div
-                      onClick={() => setSelectedProductDetails(prod)}
-                      className="bg-slate-50/80 p-3 rounded-xl border border-slate-200/70 text-xs text-slate-600 leading-relaxed cursor-pointer hover:border-libus-magenta/40 hover:bg-pink-50/20 transition group/desc"
-                      title="Clique para expandir especificações normativas"
-                    >
-                      <p className="font-medium line-clamp-3">{prod.description}</p>
-                      <div className="flex items-center gap-1 text-[11px] font-mono font-bold text-libus-magenta mt-1.5 opacity-90 group-hover/desc:opacity-100">
-                        <span>Ver Ficha Técnica Completa</span>
-                        <ArrowRight size={12} />
-                      </div>
-                    </div>
-                  )}
-
                   {/* Resumo de Fabricantes Equivalentes */}
                   {equivalencesCount > 0 ? (
-                    <div className="space-y-2 pt-2 border-t border-slate-100">
-                      <div className="flex items-center justify-between text-[11px]">
-                        <span className="font-mono font-bold uppercase text-slate-500 text-[10px] tracking-wider">
-                          Marcas Equivalentes:
+                    <div className="space-y-1.5 pt-2 border-t border-slate-100">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="font-mono font-bold uppercase text-slate-400 text-[9px] tracking-wider">
+                          Concorrentes:
                         </span>
                         <button
                           onClick={() => toggleExpand(prod.id)}
-                          className="text-libus-magenta hover:text-libus-magentaHover font-mono font-bold text-[11px] flex items-center gap-1"
+                          className="text-libus-magenta hover:text-libus-magentaHover font-mono font-bold text-[10px] flex items-center gap-0.5"
                         >
                           {isExpanded ? (
                             <>
                               <span>Ocultar</span>
-                              <ChevronUp size={13} />
+                              <ChevronUp size={11} />
                             </>
                           ) : (
                             <>
-                              <span>Ver todos ({equivalencesCount})</span>
-                              <ChevronDown size={13} />
+                              <span>Ver ({equivalencesCount})</span>
+                              <ChevronDown size={11} />
                             </>
                           )}
                         </button>
                       </div>
 
                       {/* Chips das marcas com Logo */}
-                      <div className="flex flex-wrap gap-1.5">
-                        {manufacturers.map((m) => {
+                      <div className="flex flex-wrap gap-1">
+                        {manufacturers.slice(0, 3).map((m) => {
                           const logo = getManufacturerLogo(m);
                           return (
                             <span
                               key={m}
-                              className="inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200/80 font-mono"
+                              className="inline-flex items-center gap-1 text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 font-mono"
                             >
                               {logo ? (
-                                <img src={logo} alt={m} className="h-3.5 max-w-[42px] object-contain" />
+                                <img src={logo} alt={m} className="h-2.5 max-w-[32px] object-contain" />
                               ) : (
                                 <span>{m}</span>
                               )}
                             </span>
                           );
                         })}
+                        {manufacturers.length > 3 && (
+                          <span className="text-[9px] text-slate-400 font-mono">+{manufacturers.length - 3}</span>
+                        )}
                       </div>
 
                       {/* Lista detalhada expandida */}
                       {isExpanded && (
-                        <div className="mt-3 space-y-2 max-h-56 overflow-y-auto pr-1">
+                        <div className="mt-2 space-y-1.5 max-h-48 overflow-y-auto pr-1">
                           {prod.equivalences.map((eq) => {
                             const manufName = eq.competitorProduct?.manufacturer?.name;
                             const logo = getManufacturerLogo(manufName);
@@ -715,60 +702,35 @@ export const CatalogPage: React.FC = () => {
                             return (
                               <div
                                 key={eq.id}
-                                className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex items-center justify-between text-xs hover:border-slate-300 transition"
+                                className="p-1.5 bg-slate-50 rounded-lg border border-slate-200 flex items-center justify-between text-[11px] hover:border-slate-300 transition"
                               >
-                                <div className="flex items-center gap-3 min-w-0">
-                                  {/* Imagem do Produto do Concorrente com opção de upload */}
+                                <div className="flex items-center gap-2 min-w-0">
                                   <div className="relative group/compimg flex-shrink-0">
-                                    <div className="w-10 h-10 rounded-lg bg-slate-50 p-1 flex items-center justify-center border border-slate-200 shadow-2xs overflow-hidden">
+                                    <div className="w-6 h-6 rounded bg-white p-0.5 flex items-center justify-center border border-slate-200 overflow-hidden">
                                       {compImage ? (
                                         <img
                                           src={compImage}
                                           alt={eq.competitorProduct?.name}
-                                          className="w-full h-full object-contain filter drop-shadow-2xs"
+                                          className="w-full h-full max-h-6 object-contain filter drop-shadow-2xs"
                                         />
                                       ) : (
-                                        <span className="text-[10px] font-mono font-bold text-slate-400">EPI</span>
+                                        <span className="text-[7px] font-mono text-slate-400">EPI</span>
                                       )}
                                     </div>
-
-                                    {isManager && (
-                                      <button
-                                        onClick={(e) =>
-                                          handleOpenUpload(
-                                            eq.competitorProduct.id,
-                                            `${manufName} - ${eq.competitorProduct.name}`,
-                                            false,
-                                            compImage,
-                                            e
-                                          )
-                                        }
-                                        className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover/compimg:opacity-100 transition flex items-center justify-center text-white rounded-lg"
-                                        title="Alterar foto deste concorrente"
-                                      >
-                                        <Camera size={12} />
-                                      </button>
-                                    )}
                                   </div>
 
                                   <div className="min-w-0 flex-1">
-                                    <div className="flex items-center gap-1.5 mb-0.5">
-                                      {logo ? (
-                                        <img src={logo} alt={manufName} className="h-3.5 max-w-[60px] object-contain flex-shrink-0" />
-                                      ) : (
-                                        <span className="text-[10px] font-mono font-bold text-slate-500 uppercase">
-                                          {manufName}
-                                        </span>
-                                      )}
-                                    </div>
-                                    <p className="font-bold text-slate-900 text-xs leading-snug">
+                                    <p className="font-bold text-slate-800 text-[10px] leading-tight truncate">
                                       {eq.competitorProduct?.name}
                                     </p>
+                                    <span className="text-[8px] text-slate-400 font-mono uppercase truncate block">
+                                      {manufName}
+                                    </span>
                                   </div>
                                 </div>
 
                                 {eq.competitorProduct?.caNumber && (
-                                  <span className="text-[10px] font-mono px-2 py-0.5 bg-white rounded border border-slate-200 text-slate-600 flex-shrink-0 ml-2 font-semibold">
+                                  <span className="text-[8px] font-mono px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 flex-shrink-0 ml-1">
                                     CA {eq.competitorProduct.caNumber}
                                   </span>
                                 )}
@@ -779,23 +741,23 @@ export const CatalogPage: React.FC = () => {
                       )}
                     </div>
                   ) : (
-                    <p className="text-[11px] text-slate-400 italic pt-2 border-t border-slate-100">
-                      Nenhum concorrente cadastrado como padrão para este item.
+                    <p className="text-[10px] text-slate-400 italic pt-1.5 border-t border-slate-100">
+                      Nenhum concorrente cadastrado.
                     </p>
                   )}
                 </div>
 
                 {/* Footer do Card */}
-                <div className="px-5 py-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-[10px] text-slate-500 font-mono">
-                    Homologado Libus Brasil
+                <div className="px-3 py-2 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                  <span className="text-[9px] text-slate-400 font-mono hidden sm:inline">
+                    Libus
                   </span>
                   <Link
                     to="/evaluations/new"
-                    className="text-[11px] font-mono font-bold text-libus-magenta hover:underline flex items-center gap-1"
+                    className="w-full sm:w-auto text-center text-[10px] font-mono font-bold text-libus-magenta hover:underline flex items-center justify-center gap-1"
                   >
-                    <span>Avaliar este EPI</span>
-                    <ExternalLink size={11} />
+                    <span>Avaliar</span>
+                    <ExternalLink size={10} />
                   </Link>
                 </div>
               </div>
