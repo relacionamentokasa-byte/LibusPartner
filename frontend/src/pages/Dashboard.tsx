@@ -92,10 +92,10 @@ export const DashboardPage: React.FC = () => {
           totalUsersProtected += Number(econ.activeUsers);
         }
       }
-      if (c.criterionResponses && Array.isArray(c.criterionResponses)) {
-        c.criterionResponses.forEach((cr: any) => {
-          if (cr.scoreLibus) {
-            totalCriteriaScoreSum += Number(cr.scoreLibus);
+      if (c.responses && Array.isArray(c.responses)) {
+        c.responses.forEach((cr: any) => {
+          if (cr.libusScore !== null && cr.libusScore !== undefined && !cr.isNotApplicable) {
+            totalCriteriaScoreSum += Number(cr.libusScore);
             totalCriteriaCount += 1;
           }
         });
@@ -105,7 +105,7 @@ export const DashboardPage: React.FC = () => {
 
   const avgSatisfactionScore = totalCriteriaCount > 0
     ? (totalCriteriaScoreSum / totalCriteriaCount).toFixed(1)
-    : '9.2';
+    : '—';
 
   const topCompetitors = Object.entries(competitorCounts)
     .sort((a, b) => b[1] - a[1])
