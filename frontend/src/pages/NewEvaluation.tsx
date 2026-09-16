@@ -20,6 +20,8 @@ import {
   Briefcase
 } from 'lucide-react';
 import { getManufacturerLogo } from '../utils/manufacturerLogos';
+import { getCaConsultUrl } from '../utils/caHelper';
+import { ExternalLink } from 'lucide-react';
 
 interface LibusProductItem {
   id: string;
@@ -633,9 +635,17 @@ export const NewEvaluationWizard: React.FC = () => {
                         {p.name}
                       </h4>
                       {p.caNumber && (
-                        <span className="text-[8px] sm:text-[9px] font-mono text-slate-500 block mt-0.5 truncate">
-                          CA: {p.caNumber}
-                        </span>
+                        <a
+                          href={getCaConsultUrl(p.caNumber)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[8px] sm:text-[9px] font-mono text-slate-500 hover:text-emerald-700 hover:underline inline-flex items-center gap-0.5 mt-0.5"
+                          title={`Consultar Certificado de Aprovação CA ${p.caNumber} no Ministério do Trabalho`}
+                        >
+                          <span>CA: {p.caNumber}</span>
+                          <ExternalLink size={8} className="opacity-70" />
+                        </a>
                       )}
                     </div>
                   </div>

@@ -23,6 +23,8 @@ import {
   Trash2
 } from 'lucide-react';
 import { getManufacturerLogo } from '../utils/manufacturerLogos';
+import { getCaConsultUrl } from '../utils/caHelper';
+import { ExternalLink } from 'lucide-react';
 
 export const EvaluationExecutionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -390,7 +392,35 @@ export const EvaluationExecutionPage: React.FC = () => {
                   <span className="text-slate-400 mx-1.5 font-normal">x</span>
                   <span className="text-slate-700">{comp.competitorProduct?.name}</span>
                 </p>
-                <p className="text-[11px] text-slate-500 font-medium">Fabricante: {comp.competitorProduct?.manufacturer?.name}</p>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 font-medium">
+                  <span>Fabricante: {comp.competitorProduct?.manufacturer?.name}</span>
+                  {comp.libusProduct?.caNumber && (
+                    <a
+                      href={getCaConsultUrl(comp.libusProduct.caNumber)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[9px] font-mono px-1 py-0.2 rounded bg-pink-50 text-libus-magenta font-bold border border-pink-200 hover:underline inline-flex items-center gap-0.5"
+                      title={`Consultar CA ${comp.libusProduct.caNumber} da Libus`}
+                    >
+                      <span>CA Libus: {comp.libusProduct.caNumber}</span>
+                      <ExternalLink size={8} />
+                    </a>
+                  )}
+                  {comp.competitorProduct?.caNumber && (
+                    <a
+                      href={getCaConsultUrl(comp.competitorProduct.caNumber)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200 hover:underline inline-flex items-center gap-0.5"
+                      title={`Consultar CA ${comp.competitorProduct.caNumber} do Concorrente`}
+                    >
+                      <span>CA Conc.: {comp.competitorProduct.caNumber}</span>
+                      <ExternalLink size={8} />
+                    </a>
+                  )}
+                </div>
               </div>
 
               {comp.technicalResult?.validCriteria > 0 && (
@@ -476,10 +506,38 @@ export const EvaluationExecutionPage: React.FC = () => {
                   <tr>
                     <th className="px-6 py-4 w-5/12">Critério Técnico / Requisito Normativo</th>
                     <th className="px-6 py-4 text-center bg-pink-50/50 text-libus-magenta border-l border-r border-slate-200 font-black">
-                      Libus ({activeComparison?.libusProduct?.name})
+                      <div className="flex flex-col items-center gap-1">
+                        <span>Libus ({activeComparison?.libusProduct?.name})</span>
+                        {activeComparison?.libusProduct?.caNumber && (
+                          <a
+                            href={getCaConsultUrl(activeComparison.libusProduct.caNumber)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white text-libus-magenta font-bold border border-pink-200 hover:bg-pink-50 hover:underline inline-flex items-center gap-0.5"
+                            title={`Consultar Certificado de Aprovação CA ${activeComparison.libusProduct.caNumber} no Ministério do Trabalho`}
+                          >
+                            <span>CA: {activeComparison.libusProduct.caNumber}</span>
+                            <ExternalLink size={8} />
+                          </a>
+                        )}
+                      </div>
                     </th>
                     <th className="px-6 py-4 text-center bg-slate-50 text-slate-800 border-r border-slate-200 font-black">
-                      Concorrente ({activeComparison?.competitorProduct?.name})
+                      <div className="flex flex-col items-center gap-1">
+                        <span>Concorrente ({activeComparison?.competitorProduct?.name})</span>
+                        {activeComparison?.competitorProduct?.caNumber && (
+                          <a
+                            href={getCaConsultUrl(activeComparison.competitorProduct.caNumber)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white text-slate-700 font-bold border border-slate-200 hover:bg-slate-100 hover:underline inline-flex items-center gap-0.5"
+                            title={`Consultar Certificado de Aprovação CA ${activeComparison.competitorProduct.caNumber} no Ministério do Trabalho`}
+                          >
+                            <span>CA: {activeComparison.competitorProduct.caNumber}</span>
+                            <ExternalLink size={8} />
+                          </a>
+                        )}
+                      </div>
                     </th>
                     <th className="px-6 py-4 text-center">Veredito / N/A</th>
                   </tr>
@@ -740,6 +798,18 @@ export const EvaluationExecutionPage: React.FC = () => {
                     <h4 className="text-sm font-black text-white">
                       {activeComparison?.libusProduct?.name}
                     </h4>
+                    {activeComparison?.libusProduct?.caNumber && (
+                      <a
+                        href={getCaConsultUrl(activeComparison.libusProduct.caNumber)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] font-mono px-1.5 py-0.2 mt-1 rounded bg-pink-500/20 text-pink-300 font-bold border border-pink-500/30 hover:bg-pink-500/30 transition inline-flex items-center gap-0.5"
+                        title={`Consultar Certificado de Aprovação CA ${activeComparison.libusProduct.caNumber} no Ministério do Trabalho`}
+                      >
+                        <span>CA: {activeComparison.libusProduct.caNumber}</span>
+                        <ExternalLink size={8} className="opacity-70" />
+                      </a>
+                    )}
                   </div>
                 </div>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-pink-500/20 text-libus-magenta font-bold border border-pink-500/30">
@@ -823,6 +893,18 @@ export const EvaluationExecutionPage: React.FC = () => {
                     <h4 className="text-sm font-black text-slate-900">
                       {activeComparison?.competitorProduct?.name}
                     </h4>
+                    {activeComparison?.competitorProduct?.caNumber && (
+                      <a
+                        href={getCaConsultUrl(activeComparison.competitorProduct.caNumber)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] font-mono px-1.5 py-0.2 mt-1 rounded bg-slate-200 text-slate-700 font-bold border border-slate-300 hover:bg-slate-300 transition inline-flex items-center gap-0.5"
+                        title={`Consultar Certificado de Aprovação CA ${activeComparison.competitorProduct.caNumber} no Ministério do Trabalho`}
+                      >
+                        <span>CA: {activeComparison.competitorProduct.caNumber}</span>
+                        <ExternalLink size={8} className="opacity-70" />
+                      </a>
+                    )}
                   </div>
                 </div>
                 <span className="text-[10px] text-slate-500 font-mono px-2 py-0.5 rounded bg-slate-200 font-bold">

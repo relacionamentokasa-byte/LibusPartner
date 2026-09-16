@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../services/api';
 import { LibusLogo } from '../components/LibusLogo';
 import { getManufacturerLogo } from '../utils/manufacturerLogos';
+import { getCaConsultUrl } from '../utils/caHelper';
 import {
   ShieldCheck,
   Award,
@@ -377,9 +378,16 @@ export const EvaluationReportPage: React.FC = () => {
                         <h3 className="font-bold text-slate-900 text-[11px] truncate leading-tight">{libus?.name}</h3>
                         <div className="flex items-center gap-2 text-[9px] text-slate-600">
                           {libus?.caNumber && (
-                            <span className="font-bold bg-white px-1.5 py-0.2 rounded border border-slate-200">
-                              CA: {libus.caNumber}
-                            </span>
+                            <a
+                              href={getCaConsultUrl(libus.caNumber)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-bold bg-white px-1.5 py-0.2 rounded border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5 print:border-slate-300"
+                              title={`Consultar Certificado de Aprovação CA ${libus.caNumber} no Ministério do Trabalho`}
+                            >
+                              <span>CA: {libus.caNumber}</span>
+                              <ExternalLink size={7} className="no-print opacity-70" />
+                            </a>
                           )}
                           <span>Média: <strong className="text-slate-900 text-[10px]">{tech?.libusAverageScore?.toFixed(1) || tech?.libusAverage?.toFixed(1) || '-'}</strong></span>
                         </div>
@@ -407,9 +415,16 @@ export const EvaluationReportPage: React.FC = () => {
                         <h3 className="font-bold text-slate-800 text-[11px] truncate leading-tight">{competitor?.name}</h3>
                         <div className="flex items-center gap-2 text-[9px] text-slate-600">
                           {competitor?.caNumber && (
-                            <span className="font-bold bg-white px-1.5 py-0.2 rounded border border-slate-200">
-                              CA: {competitor.caNumber}
-                            </span>
+                            <a
+                              href={getCaConsultUrl(competitor.caNumber)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-bold bg-white px-1.5 py-0.2 rounded border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5 print:border-slate-300"
+                              title={`Consultar Certificado de Aprovação CA ${competitor.caNumber} no Ministério do Trabalho`}
+                            >
+                              <span>CA: {competitor.caNumber}</span>
+                              <ExternalLink size={7} className="no-print opacity-70" />
+                            </a>
                           )}
                           <span>Média: <strong className="text-slate-800 text-[10px]">{tech?.competitorAverageScore?.toFixed(1) || tech?.competitorAverage?.toFixed(1) || '-'}</strong></span>
                         </div>

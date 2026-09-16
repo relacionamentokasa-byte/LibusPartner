@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { apiRequest } from '../services/api';
 import { getManufacturerLogo } from '../utils/manufacturerLogos';
 import { getProductSpec } from '../utils/productSpecifications';
+import { getCaConsultUrl } from '../utils/caHelper';
 import { useAuth } from '../context/AuthContext';
 import {
   Layers,
@@ -445,9 +446,17 @@ export const CatalogPage: React.FC = () => {
                         </span>
                       )}
                       {prod.caNumber && (
-                        <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200">
-                          CA {prod.caNumber}
-                        </span>
+                        <a
+                          href={getCaConsultUrl(prod.caNumber)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5"
+                          title={`Consultar Certificado de Aprovação CA ${prod.caNumber} no Ministério do Trabalho`}
+                        >
+                          <span>CA {prod.caNumber}</span>
+                          <ExternalLink size={8} className="opacity-70" />
+                        </a>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5">
@@ -527,9 +536,17 @@ export const CatalogPage: React.FC = () => {
                                 {eq.competitorProduct?.name}
                               </span>
                               {eq.competitorProduct?.caNumber && (
-                                <span className="text-[8px] px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 font-semibold flex-shrink-0">
-                                  CA {eq.competitorProduct.caNumber}
-                                </span>
+                                <a
+                                  href={getCaConsultUrl(eq.competitorProduct.caNumber)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="text-[8px] px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 font-semibold flex-shrink-0 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5"
+                                  title={`Consultar CA ${eq.competitorProduct.caNumber} no Ministério do Trabalho`}
+                                >
+                                  <span>CA {eq.competitorProduct.caNumber}</span>
+                                  <ExternalLink size={7} className="opacity-70" />
+                                </a>
                               )}
                             </div>
                           </div>
@@ -633,9 +650,17 @@ export const CatalogPage: React.FC = () => {
                       </div>
                       <div className="flex items-center justify-center sm:justify-start gap-1 flex-wrap pt-0.5">
                         {prod.caNumber && (
-                          <span className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono font-bold border border-slate-200/80">
-                            CA {prod.caNumber}
-                          </span>
+                          <a
+                            href={getCaConsultUrl(prod.caNumber)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono font-bold border border-slate-200/80 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5"
+                            title={`Consultar CA ${prod.caNumber} no Ministério do Trabalho`}
+                          >
+                            <span>CA {prod.caNumber}</span>
+                            <ExternalLink size={7} className="opacity-70" />
+                          </a>
                         )}
                         <span className="text-[9px] text-slate-500 font-medium">
                           • {equivalencesCount} eq.
@@ -730,9 +755,17 @@ export const CatalogPage: React.FC = () => {
                                 </div>
 
                                 {eq.competitorProduct?.caNumber && (
-                                  <span className="text-[8px] font-mono px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 flex-shrink-0 ml-1">
-                                    CA {eq.competitorProduct.caNumber}
-                                  </span>
+                                  <a
+                                    href={getCaConsultUrl(eq.competitorProduct.caNumber)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[8px] font-mono px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 flex-shrink-0 ml-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5 font-semibold"
+                                    title={`Consultar CA ${eq.competitorProduct.caNumber} no Ministério do Trabalho`}
+                                  >
+                                    <span>CA {eq.competitorProduct.caNumber}</span>
+                                    <ExternalLink size={7} className="opacity-70" />
+                                  </a>
                                 )}
                               </div>
                             );
@@ -932,10 +965,17 @@ export const CatalogPage: React.FC = () => {
                     </span>
                   )}
                   {selectedProductDetails.caNumber && (
-                    <span className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1">
+                    <a
+                      href={getCaConsultUrl(selectedProductDetails.caNumber)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 hover:bg-emerald-100 transition"
+                      title="Consultar Certificado de Aprovação no Ministério do Trabalho"
+                    >
                       <ShieldCheck size={12} className="text-emerald-600" />
                       <span>C.A. {selectedProductDetails.caNumber} (Ativo MTE)</span>
-                    </span>
+                      <ExternalLink size={10} className="ml-0.5 opacity-80" />
+                    </a>
                   )}
                 </div>
               </div>
