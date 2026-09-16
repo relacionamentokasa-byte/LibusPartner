@@ -263,81 +263,158 @@ export const DashboardPage: React.FC = () => {
             </Link>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100/70 text-slate-600 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 font-mono">
-                <tr>
-                  <th className="px-6 py-3.5">Empresa Cliente</th>
-                  <th className="px-6 py-3.5">Técnico Libus</th>
-                  <th className="px-6 py-3.5">Pares Avaliados (1x1)</th>
-                  <th className="px-6 py-3.5">Status</th>
-                  <th className="px-6 py-3.5">Data Registro</th>
-                  <th className="px-6 py-3.5 text-right">Ação</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {evaluations.map((ev) => (
-                  <tr key={ev.id} className="hover:bg-slate-50/80 transition group">
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900 text-sm">{ev.company?.tradeName}</div>
-                      <div className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || 'CNPJ não informado'}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-slate-800">{ev.leadTechnician?.name}</div>
-                      <div className="text-[10px] text-slate-400 uppercase font-mono">TÉCNICO ESPECIALISTA</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        {ev.comparisons?.map((c: any) => (
-                          <div key={c.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-[11px] font-medium mr-1.5">
-                            <span className="text-libus-magenta font-bold">{c.libusProduct?.name}</span>
-                            <span className="text-slate-400 text-[10px]">vs</span>
-                            <span className="text-slate-600">{c.competitorProduct?.name}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      {ev.status === 'COMPLETED' ? (
-                        <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 font-mono">
-                          <CheckCircle2 size={13} className="text-emerald-600" />
-                          <span>Homologada</span>
+          <>
+            {/* Visão em Cards para Mobile (md:hidden) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {evaluations.map((ev) => (
+                <div key={ev.id} className="p-4 space-y-3 bg-white">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-sm">{ev.company?.tradeName}</h4>
+                      <p className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || 'CNPJ não informado'}</p>
+                    </div>
+                    {ev.status === 'COMPLETED' ? (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold font-mono border border-emerald-200 flex-shrink-0">
+                        <CheckCircle2 size={11} className="text-emerald-600" />
+                        Homologada
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold font-mono border border-slate-200 flex-shrink-0">
+                        <Clock size={11} className="text-slate-400" />
+                        Em Campo
+                      </span>
+                    )}
+                  </div>
+
+                  {ev.comparisons && ev.comparisons.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {ev.comparisons.map((c: any) => (
+                        <div key={c.id} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px]">
+                          <span className="text-libus-magenta font-bold">{c.libusProduct?.name}</span>
+                          <span className="text-slate-400 text-[9px]">x</span>
+                          <span className="text-slate-600 truncate max-w-[110px]">{c.competitorProduct?.name}</span>
                         </div>
-                      ) : (
-                        <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 font-mono">
-                          <Clock size={13} className="text-slate-400" />
-                          <span>Em Campo</span>
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-slate-500 font-mono text-[11px]">
-                      {new Date(ev.createdAt).toLocaleDateString('pt-BR')}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          to={`/evaluations/${ev.id}`}
-                          className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-libus-charcoal hover:text-white rounded-lg text-xs font-bold text-slate-700 transition border border-slate-200 group-hover:border-slate-300 font-mono"
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-mono">
+                    <span>{new Date(ev.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <div className="flex items-center gap-2">
+                      <Link
+                        to={`/evaluations/${ev.id}/report`}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition font-mono"
+                      >
+                        <ShieldCheck size={12} />
+                        <span>PDF</span>
+                      </Link>
+                      <Link
+                        to={`/evaluations/${ev.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-800 hover:text-white rounded-lg text-xs font-bold text-slate-700 transition border border-slate-200 font-mono"
+                      >
+                        <span>Abrir</span>
+                        <ChevronRight size={13} />
+                      </Link>
+                      {(user?.role === 'ADMIN' || user?.role === 'GESTOR' || ev.leadTechnicianId === user?.id) && (
+                        <button
+                          onClick={() => confirmDelete(ev)}
+                          title="Excluir Avaliação"
+                          className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
                         >
-                          <span>Abrir Laudo</span>
-                          <ChevronRight size={13} />
-                        </Link>
-                        {(user?.role === 'ADMIN' || user?.role === 'GESTOR' || ev.leadTechnicianId === user?.id) && (
-                          <button
-                            onClick={() => confirmDelete(ev)}
-                            title="Excluir Avaliação"
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition border border-transparent hover:border-rose-200"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        )}
-                      </div>
-                    </td>
+                          <Trash2 size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Visão em Tabela para Desktop (hidden md:block) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100/70 text-slate-600 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 font-mono">
+                  <tr>
+                    <th className="px-6 py-3.5">Empresa Cliente</th>
+                    <th className="px-6 py-3.5">Técnico Libus</th>
+                    <th className="px-6 py-3.5">Pares Avaliados (1x1)</th>
+                    <th className="px-6 py-3.5">Status</th>
+                    <th className="px-6 py-3.5">Data Registro</th>
+                    <th className="px-6 py-3.5 text-right">Ação</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {evaluations.map((ev) => (
+                    <tr key={ev.id} className="hover:bg-slate-50/80 transition group">
+                      <td className="px-6 py-4">
+                        <div className="font-bold text-slate-900 text-sm">{ev.company?.tradeName}</div>
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || 'CNPJ não informado'}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-slate-800">{ev.leadTechnician?.name}</div>
+                        <div className="text-[10px] text-slate-400 uppercase font-mono">TÉCNICO ESPECIALISTA</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-1">
+                          {ev.comparisons?.map((c: any) => (
+                            <div key={c.id} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-100 border border-slate-200 text-[11px] font-medium mr-1.5">
+                              <span className="text-libus-magenta font-bold">{c.libusProduct?.name}</span>
+                              <span className="text-slate-400 text-[10px]">vs</span>
+                              <span className="text-slate-600">{c.competitorProduct?.name}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        {ev.status === 'COMPLETED' ? (
+                          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 font-mono">
+                            <CheckCircle2 size={13} className="text-emerald-600" />
+                            <span>Homologada</span>
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 font-mono">
+                            <Clock size={13} className="text-slate-400" />
+                            <span>Em Campo</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-slate-500 font-mono text-[11px]">
+                        {new Date(ev.createdAt).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            to={`/evaluations/${ev.id}/report`}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition font-mono"
+                            title="Ver Laudo em PDF"
+                          >
+                            <ShieldCheck size={13} />
+                            <span>PDF</span>
+                          </Link>
+                          <Link
+                            to={`/evaluations/${ev.id}`}
+                            className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-libus-charcoal hover:text-white rounded-lg text-xs font-bold text-slate-700 transition border border-slate-200 group-hover:border-slate-300 font-mono"
+                          >
+                            <span>Abrir</span>
+                            <ChevronRight size={13} />
+                          </Link>
+                          {(user?.role === 'ADMIN' || user?.role === 'GESTOR' || ev.leadTechnicianId === user?.id) && (
+                            <button
+                              onClick={() => confirmDelete(ev)}
+                              title="Excluir Avaliação"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition border border-transparent hover:border-rose-200"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 

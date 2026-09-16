@@ -363,39 +363,39 @@ export const EvaluationExecutionPage: React.FC = () => {
         })}
       </div>
 
-      {/* Navegação de Abas do Laudo */}
-      <div className="flex border-b border-slate-200 gap-8">
+      {/* Navegação de Abas do Laudo - Responsiva com Scroll Horizontal */}
+      <div className="flex border-b border-slate-200 gap-4 sm:gap-8 overflow-x-auto no-scrollbar py-0.5">
         <button
           onClick={() => setActiveTab('TECNICA')}
-          className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition font-mono ${
+          className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition font-mono flex-shrink-0 ${
             activeTab === 'TECNICA'
               ? 'border-libus-magenta text-libus-magenta'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <ShieldCheck size={16} /> <span>1. Avaliação Técnica (Notas 1 a 10)</span>
+          <ShieldCheck size={16} /> <span>1. Avaliação Técnica</span>
         </button>
 
         <button
           onClick={() => setActiveTab('ECONOMICA')}
-          className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition font-mono ${
+          className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition font-mono flex-shrink-0 ${
             activeTab === 'ECONOMICA'
               ? 'border-libus-magenta text-libus-magenta'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <DollarSign size={16} /> <span>2. Análise Econômica & Consumo</span>
+          <DollarSign size={16} /> <span>2. Análise Econômica</span>
         </button>
 
         <button
           onClick={() => setActiveTab('RESULTADO')}
-          className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition font-mono ${
+          className={`pb-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b-2 transition font-mono flex-shrink-0 ${
             activeTab === 'RESULTADO'
               ? 'border-libus-magenta text-libus-magenta'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Award size={16} /> <span>3. Laudo Executivo Consolidado</span>
+          <Award size={16} /> <span>3. Laudo Consolidado</span>
         </button>
       </div>
 
@@ -426,107 +426,203 @@ export const EvaluationExecutionPage: React.FC = () => {
             </button>
           </div>
 
-          {/* Ficha de Critérios */}
+          {/* Ficha de Critérios - Desktop Table & Mobile Touch Cards */}
           <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-100/80 text-slate-700 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 font-mono">
-                <tr>
-                  <th className="px-6 py-4 w-5/12">Critério Técnico / Requisito Normativo</th>
-                  <th className="px-6 py-4 text-center bg-pink-50/50 text-libus-magenta border-l border-r border-slate-200 font-black">
-                    Libus ({activeComparison?.libusProduct?.name})
-                  </th>
-                  <th className="px-6 py-4 text-center bg-slate-50 text-slate-800 border-r border-slate-200 font-black">
-                    Concorrente ({activeComparison?.competitorProduct?.name})
-                  </th>
-                  <th className="px-6 py-4 text-center">Veredito / N/A</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
-                {activeComparison?.responses?.map((r: any) => {
-                  const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
-                  const isNA = state.na;
-                  const lScore = state.libus;
-                  const cScore = state.comp;
+            {/* Visão Tabela Desktop (md:block) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-100/80 text-slate-700 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 font-mono">
+                  <tr>
+                    <th className="px-6 py-4 w-5/12">Critério Técnico / Requisito Normativo</th>
+                    <th className="px-6 py-4 text-center bg-pink-50/50 text-libus-magenta border-l border-r border-slate-200 font-black">
+                      Libus ({activeComparison?.libusProduct?.name})
+                    </th>
+                    <th className="px-6 py-4 text-center bg-slate-50 text-slate-800 border-r border-slate-200 font-black">
+                      Concorrente ({activeComparison?.competitorProduct?.name})
+                    </th>
+                    <th className="px-6 py-4 text-center">Veredito / N/A</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  {activeComparison?.responses?.map((r: any) => {
+                    const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
+                    const isNA = state.na;
+                    const lScore = state.libus;
+                    const cScore = state.comp;
 
-                  let indicator = null;
-                  if (!isNA && lScore && cScore) {
-                    if (lScore > cScore) {
-                      indicator = (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded uppercase font-mono">
-                          Libus +{lScore - cScore}
-                        </span>
-                      );
-                    } else if (lScore < cScore) {
-                      indicator = (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded uppercase font-mono">
-                          Concorrente +{cScore - lScore}
-                        </span>
-                      );
-                    } else {
-                      indicator = (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded uppercase font-mono">
-                          Equivalente
-                        </span>
-                      );
+                    let indicator = null;
+                    if (!isNA && lScore && cScore) {
+                      if (lScore > cScore) {
+                        indicator = (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded uppercase font-mono">
+                            Libus +{lScore - cScore}
+                          </span>
+                        );
+                      } else if (lScore < cScore) {
+                        indicator = (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded uppercase font-mono">
+                            Concorrente +{cScore - lScore}
+                          </span>
+                        );
+                      } else {
+                        indicator = (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2.5 py-0.5 rounded uppercase font-mono">
+                            Equivalente
+                          </span>
+                        );
+                      }
                     }
+
+                    return (
+                      <tr key={r.id} className={isNA ? 'bg-slate-50/70 opacity-50' : 'hover:bg-slate-50/40 transition'}>
+                        <td className="px-6 py-4 font-semibold text-slate-900">
+                          {r.attribute?.name}
+                        </td>
+
+                        {/* Seletor Libus */}
+                        <td className="px-6 py-3 text-center bg-pink-50/30 border-l border-r border-slate-100">
+                          <select
+                            disabled={isNA}
+                            value={state.libus ?? ''}
+                            onChange={(e) => handleScoreChange(r.attributeId, 'libus', Number(e.target.value))}
+                            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-libus-magenta focus:ring-2 focus:ring-pink-400 focus:border-pink-400 shadow-xs cursor-pointer"
+                          >
+                            <option value="">Nota...</option>
+                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                              <option key={n} value={n}>{n} {n === 10 ? '★ (Melhor)' : ''}</option>
+                            ))}
+                          </select>
+                        </td>
+
+                        {/* Seletor Concorrente */}
+                        <td className="px-6 py-3 text-center bg-slate-50/80 border-r border-slate-100">
+                          <select
+                            disabled={isNA}
+                            value={state.comp ?? ''}
+                            onChange={(e) => handleScoreChange(r.attributeId, 'comp', Number(e.target.value))}
+                            className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-800 focus:ring-2 focus:ring-slate-400 focus:border-slate-400 shadow-xs cursor-pointer"
+                          >
+                            <option value="">Nota...</option>
+                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                              <option key={n} value={n}>{n} {n === 10 ? '★ (Melhor)' : ''}</option>
+                            ))}
+                          </select>
+                        </td>
+
+                        {/* Status / N/A */}
+                        <td className="px-6 py-3 text-center">
+                          <div className="flex items-center justify-center gap-3">
+                            {indicator}
+                            <label className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer font-medium hover:text-slate-800">
+                              <input
+                                type="checkbox"
+                                checked={isNA}
+                                onChange={() => handleToggleNA(r.attributeId)}
+                                className="rounded border-slate-300 text-libus-magenta focus:ring-pink-400"
+                              />
+                              <span>N/A</span>
+                            </label>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Visão Mobile Touch Cards (md:hidden) */}
+            <div className="md:hidden divide-y divide-slate-100">
+              {activeComparison?.responses?.map((r: any) => {
+                const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
+                const isNA = state.na;
+                const lScore = state.libus;
+                const cScore = state.comp;
+
+                let indicator = null;
+                if (!isNA && lScore && cScore) {
+                  if (lScore > cScore) {
+                    indicator = (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                        Libus +{lScore - cScore}
+                      </span>
+                    );
+                  } else if (lScore < cScore) {
+                    indicator = (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded font-mono">
+                        Concorrente +{cScore - lScore}
+                      </span>
+                    );
+                  } else {
+                    indicator = (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono">
+                        Equivalente
+                      </span>
+                    );
                   }
+                }
 
-                  return (
-                    <tr key={r.id} className={isNA ? 'bg-slate-50/70 opacity-50' : 'hover:bg-slate-50/40 transition'}>
-                      <td className="px-6 py-4 font-semibold text-slate-900">
+                return (
+                  <div key={r.id} className={`p-4 space-y-3 ${isNA ? 'bg-slate-50/70 opacity-60' : 'bg-white'}`}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="font-bold text-slate-900 text-xs flex-1">
                         {r.attribute?.name}
-                      </td>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        {indicator}
+                        <label className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600 font-mono cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={isNA}
+                            onChange={() => handleToggleNA(r.attributeId)}
+                            className="rounded border-slate-300 text-libus-magenta focus:ring-pink-400"
+                          />
+                          <span>N/A</span>
+                        </label>
+                      </div>
+                    </div>
 
-                      {/* Seletor Libus */}
-                      <td className="px-6 py-3 text-center bg-blue-50/20 border-l border-r border-slate-100">
-                        <select
-                          disabled={isNA}
-                          value={state.libus ?? ''}
-                          onChange={(e) => handleScoreChange(r.attributeId, 'libus', Number(e.target.value))}
-                          className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-libus-blue focus:ring-2 focus:ring-libus-lightBlue focus:border-libus-lightBlue shadow-xs cursor-pointer"
-                        >
-                          <option value="">Nota...</option>
-                          {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                            <option key={n} value={n}>{n} {n === 10 ? '★ (Melhor)' : ''}</option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {/* Seletor Concorrente */}
-                      <td className="px-6 py-3 text-center bg-amber-50/20 border-r border-slate-100">
-                        <select
-                          disabled={isNA}
-                          value={state.comp ?? ''}
-                          onChange={(e) => handleScoreChange(r.attributeId, 'comp', Number(e.target.value))}
-                          className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-800 focus:ring-2 focus:ring-amber-500 focus:border-amber-500 shadow-xs cursor-pointer"
-                        >
-                          <option value="">Nota...</option>
-                          {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                            <option key={n} value={n}>{n} {n === 10 ? '★ (Melhor)' : ''}</option>
-                          ))}
-                        </select>
-                      </td>
-
-                      {/* Status / N/A */}
-                      <td className="px-6 py-3 text-center">
-                        <div className="flex items-center justify-center gap-3">
-                          {indicator}
-                          <label className="inline-flex items-center gap-1.5 text-[11px] text-slate-500 cursor-pointer font-medium hover:text-slate-800">
-                            <input
-                              type="checkbox"
-                              checked={isNA}
-                              onChange={() => handleToggleNA(r.attributeId)}
-                              className="rounded border-slate-300 text-libus-blue focus:ring-libus-lightBlue"
-                            />
-                            <span>N/A</span>
-                          </label>
+                    {!isNA && (
+                      <div className="grid grid-cols-2 gap-2.5 pt-1">
+                        {/* Box Nota Libus Mobile */}
+                        <div className="p-2.5 rounded-xl bg-pink-50/60 border border-pink-100 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-libus-magenta font-mono block">
+                            Libus
+                          </span>
+                          <select
+                            value={state.libus ?? ''}
+                            onChange={(e) => handleScoreChange(r.attributeId, 'libus', Number(e.target.value))}
+                            className="w-full px-2.5 py-2 bg-white border border-pink-200 rounded-lg text-xs font-black text-libus-magenta focus:ring-2 focus:ring-pink-400"
+                          >
+                            <option value="">Nota (1 a 10)</option>
+                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                              <option key={n} value={n}>Nota {n} {n === 10 ? '★' : ''}</option>
+                            ))}
+                          </select>
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+
+                        {/* Box Nota Concorrente Mobile */}
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 font-mono block truncate">
+                            {activeComparison?.competitorProduct?.manufacturer?.name || 'Concorrente'}
+                          </span>
+                          <select
+                            value={state.comp ?? ''}
+                            onChange={(e) => handleScoreChange(r.attributeId, 'comp', Number(e.target.value))}
+                            className="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-800 focus:ring-2 focus:ring-slate-400"
+                          >
+                            <option value="">Nota (1 a 10)</option>
+                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
+                              <option key={n} value={n}>Nota {n} {n === 10 ? '★' : ''}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}

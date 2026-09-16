@@ -254,10 +254,62 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         </header>
 
         {/* Viewport Content - Fluido e sem margens gigantes */}
-        <div className="p-4 sm:p-6 md:p-8 flex-1 w-full max-w-[1700px] mx-auto">
+        <div className="p-4 sm:p-6 md:p-8 pb-24 md:pb-8 flex-1 w-full max-w-[1700px] mx-auto">
           {children}
         </div>
       </main>
+
+      {/* Bottom Navigation Bar (Mobile Native App Style) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-[#0F141F]/95 backdrop-blur-lg border-t border-white/10 px-2 py-1.5 flex items-center justify-around text-white shadow-2xl no-print">
+        <Link
+          to="/"
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition ${
+            location.pathname === '/' ? 'text-libus-magenta font-bold' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <LayoutDashboard size={18} />
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Início</span>
+        </Link>
+
+        <Link
+          to="/evaluations"
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition ${
+            location.pathname === '/evaluations' ? 'text-libus-magenta font-bold' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <ClipboardCheck size={18} />
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Laudos</span>
+        </Link>
+
+        {/* Floating Action Button (Nova Avaliação) */}
+        <Link
+          to="/evaluations/new"
+          className="flex flex-col items-center justify-center -mt-5 group"
+        >
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-libus-magenta to-pink-500 text-white flex items-center justify-center shadow-lg shadow-pink-500/40 border-2 border-[#0F141F] group-active:scale-95 transition">
+            <Plus size={22} className="stroke-[2.5]" />
+          </div>
+          <span className="text-[9px] font-bold tracking-tight text-pink-400 mt-1 uppercase font-mono">Novo</span>
+        </Link>
+
+        <Link
+          to="/catalog"
+          className={`flex flex-col items-center justify-center py-1 px-2.5 rounded-xl transition ${
+            location.pathname === '/catalog' ? 'text-libus-magenta font-bold' : 'text-slate-400 hover:text-white'
+          }`}
+        >
+          <Layers size={18} />
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Catálogo</span>
+        </Link>
+
+        <button
+          onClick={() => setMobileMenuOpen(true)}
+          className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-slate-400 hover:text-white transition"
+        >
+          <Menu size={18} />
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Menu</span>
+        </button>
+      </nav>
 
       {/* Modal de Alteração de Senha */}
       {showPasswordModal && (

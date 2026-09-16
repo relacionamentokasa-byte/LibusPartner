@@ -456,28 +456,28 @@ export const NewEvaluationWizard: React.FC = () => {
             </div>
           </div>
 
-          {/* Grade Visual da Vitrine */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[580px] overflow-y-auto pr-1">
+          {/* Grade Visual da Vitrine - Responsiva para Mobile com Touch Otimizado */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[580px] overflow-y-auto pr-1">
             {filteredLibusProducts.map((p) => {
               const inBenchCount = comparisonPairs.filter(cp => cp.libusProduct.id === p.id).length;
               return (
                 <div
                   key={p.id}
                   onClick={() => handleOpenPairing(p)}
-                  className={`p-3.5 bg-white rounded-2xl border transition cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md relative overflow-hidden ${
+                  className={`p-3.5 bg-white rounded-2xl border transition cursor-pointer flex flex-col justify-between group shadow-xs hover:shadow-md relative overflow-hidden active:scale-[0.98] ${
                     inBenchCount > 0
                       ? 'border-libus-magenta ring-2 ring-pink-500/20'
                       : 'border-slate-200/90 hover:border-libus-magenta/60'
                   }`}
                 >
                   {inBenchCount > 0 && (
-                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-md bg-libus-magenta text-white text-[9px] font-mono font-bold">
+                    <span className="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-libus-magenta text-white text-[9px] font-mono font-bold shadow-xs">
                       {inBenchCount} na bancada
                     </span>
                   )}
 
                   <div className="space-y-2">
-                    <div className="w-full h-24 rounded-xl bg-slate-50 p-2 flex items-center justify-center overflow-hidden border border-slate-100 group-hover:border-libus-magenta/20 transition">
+                    <div className="w-full h-28 rounded-xl bg-slate-50 p-2 flex items-center justify-center overflow-hidden border border-slate-100 group-hover:border-libus-magenta/20 transition">
                       {p.imageUrl ? (
                         <img
                           src={p.imageUrl}
@@ -485,7 +485,7 @@ export const NewEvaluationWizard: React.FC = () => {
                           className="w-full h-full object-contain group-hover:scale-105 transition transform"
                         />
                       ) : (
-                        <span className="text-[10px] text-slate-400 font-mono">LIBUS</span>
+                        <span className="text-[10px] text-slate-400 font-mono font-bold">LIBUS</span>
                       )}
                     </div>
 
@@ -497,7 +497,7 @@ export const NewEvaluationWizard: React.FC = () => {
                         {p.name}
                       </h4>
                       {p.caNumber && (
-                        <span className="text-[9px] font-mono text-slate-500">
+                        <span className="text-[9px] font-mono text-slate-500 block mt-0.5">
                           CA: {p.caNumber}
                         </span>
                       )}
@@ -506,7 +506,7 @@ export const NewEvaluationWizard: React.FC = () => {
 
                   <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono font-bold text-libus-magenta">
                     <span>+ Parear 1x1</span>
-                    <Plus size={13} />
+                    <Plus size={14} />
                   </div>
                 </div>
               );
