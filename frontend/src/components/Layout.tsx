@@ -225,22 +225,18 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 min-h-screen">
-        {/* Topbar Institucional */}
-        <header className="bg-white border-b border-slate-200/80 px-4 md:px-8 py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-10 backdrop-blur-md bg-white/95 no-print">
-          <div className="flex items-center gap-3">
-            {/* Botão Hamburger Mobile */}
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              className="md:hidden p-2 rounded-lg bg-slate-100 text-slate-700 hover:bg-slate-200"
-              aria-label="Abrir Menu"
-            >
-              <Menu size={20} />
-            </button>
+        {/* Topbar Institucional - Compacto e Otimizado no Mobile */}
+        <header className="bg-white border-b border-slate-200/80 px-3.5 sm:px-4 md:px-8 py-2.5 sm:py-3.5 flex items-center justify-between shadow-xs sticky top-0 z-10 backdrop-blur-md bg-white/95 no-print">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            {/* Logotipo Compacto no Mobile */}
+            <div className="md:hidden flex items-center gap-2">
+              <LibusLogo className="h-6 w-auto" textColor="#0F141F" badgeText="PARTNER" />
+            </div>
 
-            <div className="p-1.5 rounded-lg bg-slate-100 text-libus-magenta border border-slate-200 hidden sm:block">
+            <div className="p-1.5 rounded-lg bg-slate-100 text-libus-magenta border border-slate-200 hidden md:block">
               <ShieldCheck size={18} />
             </div>
-            <div>
+            <div className="hidden md:block">
               <h2 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono">
                 Homologação Técnica & Comparativo Normativo
               </h2>
@@ -249,7 +245,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+
+          <div className="flex items-center gap-2">
+            {user && (
+              <div className="flex items-center gap-2 md:hidden">
+                <div className="w-7 h-7 rounded-lg bg-libus-charcoal text-white flex items-center justify-center text-[11px] font-black font-mono border border-slate-700">
+                  {user.name?.charAt(0) || 'U'}
+                </div>
+              </div>
+            )}
           </div>
         </header>
 

@@ -277,8 +277,49 @@ export const EvaluationExecutionPage: React.FC = () => {
           </div>
       </div>
 
+      {/* Resumo de Superioridade em Badge Fixo / Placar em Tempo Real no Topo */}
+      {activeComparison && (
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-libus-charcoal text-white flex items-center justify-center font-black font-mono text-xs flex-shrink-0">
+              VS
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                  DUELO #{activeComparisonIndex + 1} • {activeComparison.libusProduct?.category?.name || 'EPI'}
+                </span>
+              </div>
+              <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                <span className="text-libus-magenta">{activeComparison.libusProduct?.name}</span>
+                <span className="text-slate-400 font-normal">vs</span>
+                <span className="text-slate-700">{activeComparison.competitorProduct?.name}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2.5 self-end sm:self-auto">
+            {activeComparison.technicalResult?.validCriteria > 0 ? (
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200">
+                <div className="text-right">
+                  <span className="text-[9px] font-bold text-emerald-800 uppercase font-mono block">Superioridade</span>
+                  <span className="text-xs sm:text-sm font-black text-emerald-700 font-mono">
+                    +{activeComparison.technicalResult?.libusSuperiorityPercent ?? 0}%
+                  </span>
+                </div>
+                <Award size={18} className="text-emerald-600" />
+              </div>
+            ) : (
+              <span className="text-[11px] font-mono text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
+                Preencha as notas abaixo
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Participantes da Empresa Avaliada */}
-      <div className="bg-slate-100/70 border border-slate-200/80 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div className="bg-slate-100/70 border border-slate-200/80 p-3.5 sm:p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="p-1.5 rounded-lg bg-white border border-slate-200 text-libus-magenta">
             <Users size={16} />
