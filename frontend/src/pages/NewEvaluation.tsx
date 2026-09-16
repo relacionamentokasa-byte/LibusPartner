@@ -882,15 +882,53 @@ export const NewEvaluationWizard: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5 font-mono">
-                  Contexto / Posto de Trabalho
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-xs font-bold text-slate-700 font-mono">
+                    Contexto / Posto de Trabalho
+                  </label>
+                  <span className="text-[10px] text-slate-400 font-mono">Sugestões rápidas</span>
+                </div>
+
+                {/* Chips de Postos de Trabalho Pré-Definidos Padronizados */}
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {[
+                    'Linha de Solda & Caldeiraria',
+                    'Usinagem & Torneamento',
+                    'Montagem Industrial & Linha',
+                    'Manutenção Mecânica & Elétrica',
+                    'Trabalho em Altura (NR-35)',
+                    'Espaço Confinado (NR-33)',
+                    'Pintura Industrial & Cabine',
+                    'Logística & Movimentação',
+                    'Construção Civil & Obras',
+                    'Laboratório & Químicos',
+                    'Fundição & Tratamento Térmico',
+                    'Mineração & Pátio Pesado'
+                  ].map((preset) => {
+                    const isSelected = observations === preset;
+                    return (
+                      <button
+                        key={preset}
+                        type="button"
+                        onClick={() => setObservations(isSelected ? '' : preset)}
+                        className={`text-[10px] font-mono px-2 py-1 rounded-lg border transition ${
+                          isSelected
+                            ? 'bg-libus-magenta text-white border-libus-magenta font-bold shadow-2xs'
+                            : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-slate-900 font-medium'
+                        }`}
+                      >
+                        {preset}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <input
                   type="text"
                   value={observations}
                   onChange={(e) => setObservations(e.target.value)}
-                  placeholder="Ex: Usinagem, Linha de Solda, 1º Turno..."
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800"
+                  placeholder="Ou digite um posto personalizado (ex: Pátio de Coque, Forno 02)..."
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-libus-magenta/40"
                 />
               </div>
 

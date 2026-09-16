@@ -436,40 +436,51 @@ export const CatalogPage: React.FC = () => {
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
-                      <span className="text-[9px] font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300">
-                        LIBUS
-                      </span>
-                      {prod.internalCode && (
-                        <span className="text-[9px] font-mono text-slate-500 font-semibold">
-                          CÓD: {prod.internalCode}
-                        </span>
-                      )}
-                      {prod.caNumber && (
-                        <a
-                          href={getCaConsultUrl(prod.caNumber)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5"
-                          title={`Consultar Certificado de Aprovação CA ${prod.caNumber} no Ministério do Trabalho`}
-                        >
-                          <span>CA {prod.caNumber}</span>
-                          <ExternalLink size={8} className="opacity-70" />
-                        </a>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate group-hover/card:text-libus-magenta transition" title={prod.name}>
-                        {prod.name}
-                      </h3>
-                      <Info size={12} className="text-slate-400 group-hover/card:text-libus-magenta flex-shrink-0" />
-                    </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
-                      <span className="font-semibold text-slate-700">{prod.category?.family?.name}</span>
-                      <span>•</span>
-                      <span className="text-slate-400 truncate">{prod.category?.name}</span>
-                    </div>
+                    {(() => {
+                      const spec = getProductSpec(prod.name);
+                      const caNum = prod.caNumber || spec?.caNumber;
+                      const intCode = prod.internalCode || spec?.internalCode;
+
+                      return (
+                        <>
+                          <div className="flex items-center gap-1.5 flex-wrap mb-0.5">
+                            <span className="text-[9px] font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-300">
+                              LIBUS
+                            </span>
+                            {intCode && (
+                              <span className="text-[9px] font-mono text-slate-500 font-semibold">
+                                CÓD: {intCode}
+                              </span>
+                            )}
+                            {caNum && (
+                              <a
+                                href={getCaConsultUrl(caNum)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-[9px] font-mono px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 font-bold border border-emerald-300 hover:bg-emerald-100 transition inline-flex items-center gap-1 shadow-2xs"
+                                title={`Consultar Certificado de Aprovação CA ${caNum} no Ministério do Trabalho`}
+                              >
+                                <ShieldCheck size={11} className="text-emerald-600" />
+                                <span>CA {caNum}</span>
+                                <ExternalLink size={8} className="opacity-80" />
+                              </a>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <h3 className="font-bold text-slate-900 text-xs sm:text-sm leading-tight truncate group-hover/card:text-libus-magenta transition" title={prod.name}>
+                              {prod.name}
+                            </h3>
+                            <Info size={12} className="text-slate-400 group-hover/card:text-libus-magenta flex-shrink-0" />
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[10px] text-slate-500 mt-0.5">
+                            <span className="font-semibold text-slate-700">{prod.category?.family?.name}</span>
+                            <span>•</span>
+                            <span className="text-slate-400 truncate">{prod.category?.name}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
                   </div>
                 </div>
 
@@ -628,45 +639,54 @@ export const CatalogPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="space-y-1 min-w-0 flex-1 w-full">
-                      <div className="flex items-center justify-center sm:justify-start gap-1 text-[8px] font-mono font-bold tracking-wider flex-wrap">
-                        <span className="text-slate-900 bg-slate-100 px-1 py-0.2 rounded border border-slate-300">
-                          LIBUS
-                        </span>
-                        {prod.internalCode && (
-                          <span className="text-slate-600 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/80">
-                            CÓD: {prod.internalCode}
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        onClick={() => setSelectedProductDetails(prod)}
-                        className="cursor-pointer group/title"
-                        title="Ver Ficha Técnica Completa"
-                      >
-                        <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight line-clamp-2 group-hover/title:text-libus-magenta transition">
-                          {prod.name}
-                        </h3>
-                      </div>
-                      <div className="flex items-center justify-center sm:justify-start gap-1 flex-wrap pt-0.5">
-                        {prod.caNumber && (
-                          <a
-                            href={getCaConsultUrl(prod.caNumber)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="text-[9px] px-1.5 py-0.2 rounded bg-slate-100 text-slate-700 font-mono font-bold border border-slate-200/80 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5"
-                            title={`Consultar CA ${prod.caNumber} no Ministério do Trabalho`}
+                    {(() => {
+                      const spec = getProductSpec(prod.name);
+                      const caNum = prod.caNumber || spec?.caNumber;
+                      const intCode = prod.internalCode || spec?.internalCode;
+
+                      return (
+                        <div className="space-y-1 min-w-0 flex-1 w-full">
+                          <div className="flex items-center justify-center sm:justify-start gap-1 text-[8px] font-mono font-bold tracking-wider flex-wrap">
+                            <span className="text-slate-900 bg-slate-100 px-1 py-0.2 rounded border border-slate-300">
+                              LIBUS
+                            </span>
+                            {intCode && (
+                              <span className="text-slate-600 bg-slate-100 px-1 py-0.2 rounded border border-slate-200/80">
+                                CÓD: {intCode}
+                              </span>
+                            )}
+                          </div>
+                          <div
+                            onClick={() => setSelectedProductDetails(prod)}
+                            className="cursor-pointer group/title"
+                            title="Ver Ficha Técnica Completa"
                           >
-                            <span>CA {prod.caNumber}</span>
-                            <ExternalLink size={7} className="opacity-70" />
-                          </a>
-                        )}
-                        <span className="text-[9px] text-slate-500 font-medium">
-                          • {equivalencesCount} eq.
-                        </span>
-                      </div>
-                    </div>
+                            <h3 className="text-xs sm:text-sm font-bold text-slate-900 leading-tight line-clamp-2 group-hover/title:text-libus-magenta transition">
+                              {prod.name}
+                            </h3>
+                          </div>
+                          <div className="flex items-center justify-center sm:justify-start gap-1 flex-wrap pt-0.5">
+                            {caNum && (
+                              <a
+                                href={getCaConsultUrl(caNum)}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="text-[9px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-800 font-mono font-bold border border-emerald-300 hover:bg-emerald-100 transition inline-flex items-center gap-0.5 shadow-2xs"
+                                title={`Consultar CA ${caNum} no Ministério do Trabalho`}
+                              >
+                                <ShieldCheck size={9} className="text-emerald-600" />
+                                <span>CA {caNum}</span>
+                                <ExternalLink size={7} className="opacity-80" />
+                              </a>
+                            )}
+                            <span className="text-[9px] text-slate-500 font-medium">
+                              • {equivalencesCount} eq.
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Resumo de Fabricantes Equivalentes */}
@@ -959,24 +979,34 @@ export const CatalogPage: React.FC = () => {
                   {selectedProductDetails.name}
                 </h2>
                 <div className="flex items-center gap-2 pt-1 flex-wrap font-mono text-xs">
-                  {selectedProductDetails.internalCode && (
-                    <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded border border-slate-200">
-                      CÓD: {selectedProductDetails.internalCode}
-                    </span>
-                  )}
-                  {selectedProductDetails.caNumber && (
-                    <a
-                      href={getCaConsultUrl(selectedProductDetails.caNumber)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded border border-emerald-200 flex items-center gap-1 hover:bg-emerald-100 transition"
-                      title="Consultar Certificado de Aprovação no Ministério do Trabalho"
-                    >
-                      <ShieldCheck size={12} className="text-emerald-600" />
-                      <span>C.A. {selectedProductDetails.caNumber} (Ativo MTE)</span>
-                      <ExternalLink size={10} className="ml-0.5 opacity-80" />
-                    </a>
-                  )}
+                  {(() => {
+                    const spec = getProductSpec(selectedProductDetails.name);
+                    const caNum = selectedProductDetails.caNumber || spec?.caNumber;
+                    const intCode = selectedProductDetails.internalCode || spec?.internalCode;
+
+                    return (
+                      <>
+                        {intCode && (
+                          <span className="bg-slate-100 text-slate-700 font-bold px-2 py-0.5 rounded border border-slate-200">
+                            CÓD: {intCode}
+                          </span>
+                        )}
+                        {caNum && (
+                          <a
+                            href={getCaConsultUrl(caNum)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-emerald-50 text-emerald-700 font-bold px-2.5 py-1 rounded-lg border border-emerald-200 flex items-center gap-1.5 hover:bg-emerald-100 transition shadow-2xs cursor-pointer"
+                            title="Consultar Certificado de Aprovação no Ministério do Trabalho"
+                          >
+                            <ShieldCheck size={14} className="text-emerald-600" />
+                            <span>C.A. {caNum} (Ativo MTE)</span>
+                            <ExternalLink size={11} className="opacity-80" />
+                          </a>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
