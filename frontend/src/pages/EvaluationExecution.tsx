@@ -531,7 +531,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               </table>
             </div>
 
-            {/* Visão Mobile Touch Cards (md:hidden) */}
+            {/* Visão Mobile Touch Cards (md:hidden) com Pílulas Táteis 1-10 */}
             <div className="md:hidden divide-y divide-slate-100">
               {activeComparison?.responses?.map((r: any) => {
                 const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
@@ -543,19 +543,19 @@ export const EvaluationExecutionPage: React.FC = () => {
                 if (!isNA && lScore && cScore) {
                   if (lScore > cScore) {
                     indicator = (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-black text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-mono">
                         Libus +{lScore - cScore}
                       </span>
                     );
                   } else if (lScore < cScore) {
                     indicator = (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded font-mono">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-black text-red-700 bg-red-50 border border-red-200 px-2 py-0.5 rounded font-mono">
                         Concorrente +{cScore - lScore}
                       </span>
                     );
                   } else {
                     indicator = (
-                      <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono">
+                      <span className="inline-flex items-center gap-1 text-[9px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded font-mono">
                         Equivalente
                       </span>
                     );
@@ -563,14 +563,14 @@ export const EvaluationExecutionPage: React.FC = () => {
                 }
 
                 return (
-                  <div key={r.id} className={`p-4 space-y-3 ${isNA ? 'bg-slate-50/70 opacity-60' : 'bg-white'}`}>
+                  <div key={r.id} className={`p-3.5 space-y-3 ${isNA ? 'bg-slate-50/70 opacity-60' : 'bg-white'}`}>
                     <div className="flex items-start justify-between gap-2">
                       <div className="font-bold text-slate-900 text-xs flex-1">
                         {r.attribute?.name}
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
                         {indicator}
-                        <label className="inline-flex items-center gap-1 px-2 py-1 bg-slate-100 rounded-lg text-[10px] font-bold text-slate-600 font-mono cursor-pointer">
+                        <label className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-100 rounded-md text-[10px] font-bold text-slate-600 font-mono cursor-pointer">
                           <input
                             type="checkbox"
                             checked={isNA}
@@ -583,39 +583,71 @@ export const EvaluationExecutionPage: React.FC = () => {
                     </div>
 
                     {!isNA && (
-                      <div className="grid grid-cols-2 gap-2.5 pt-1">
-                        {/* Box Nota Libus Mobile */}
-                        <div className="p-2.5 rounded-xl bg-pink-50/60 border border-pink-100 space-y-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-libus-magenta font-mono block">
-                            Libus
-                          </span>
-                          <select
-                            value={state.libus ?? ''}
-                            onChange={(e) => handleScoreChange(r.attributeId, 'libus', Number(e.target.value))}
-                            className="w-full px-2.5 py-2 bg-white border border-pink-200 rounded-lg text-xs font-black text-libus-magenta focus:ring-2 focus:ring-pink-400"
-                          >
-                            <option value="">Nota (1 a 10)</option>
-                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                              <option key={n} value={n}>Nota {n} {n === 10 ? '★' : ''}</option>
-                            ))}
-                          </select>
+                      <div className="space-y-2.5 pt-0.5">
+                        {/* Seletor Rápido Libus (Touch Chips 1 a 10) */}
+                        <div className="p-2.5 rounded-xl bg-pink-50/50 border border-pink-100 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-libus-magenta font-mono">
+                              Libus: {lScore ? `Nota ${lScore}` : 'Selecione'}
+                            </span>
+                            {lScore === 10 && (
+                              <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded font-mono">
+                                ★ Excelência
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-10 gap-1">
+                            {[1,2,3,4,5,6,7,8,9,10].map(n => {
+                              const isSelected = lScore === n;
+                              return (
+                                <button
+                                  key={n}
+                                  type="button"
+                                  onClick={() => handleScoreChange(r.attributeId, 'libus', n)}
+                                  className={`py-1.5 text-xs font-black rounded-lg transition active:scale-90 font-mono flex items-center justify-center ${
+                                    isSelected
+                                      ? 'bg-libus-magenta text-white shadow-sm ring-2 ring-pink-400'
+                                      : 'bg-white text-slate-700 border border-slate-200 hover:border-pink-300'
+                                  }`}
+                                >
+                                  {n}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
 
-                        {/* Box Nota Concorrente Mobile */}
-                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 font-mono block truncate">
-                            {activeComparison?.competitorProduct?.manufacturer?.name || 'Concorrente'}
-                          </span>
-                          <select
-                            value={state.comp ?? ''}
-                            onChange={(e) => handleScoreChange(r.attributeId, 'comp', Number(e.target.value))}
-                            className="w-full px-2.5 py-2 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-800 focus:ring-2 focus:ring-slate-400"
-                          >
-                            <option value="">Nota (1 a 10)</option>
-                            {[1,2,3,4,5,6,7,8,9,10].map(n => (
-                              <option key={n} value={n}>Nota {n} {n === 10 ? '★' : ''}</option>
-                            ))}
-                          </select>
+                        {/* Seletor Rápido Concorrente (Touch Chips 1 a 10) */}
+                        <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-600 font-mono truncate">
+                              {activeComparison?.competitorProduct?.manufacturer?.name || 'Concorrente'}: {cScore ? `Nota ${cScore}` : 'Selecione'}
+                            </span>
+                            {cScore === 10 && (
+                              <span className="text-[9px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.2 rounded font-mono">
+                                ★ Excelência
+                              </span>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-10 gap-1">
+                            {[1,2,3,4,5,6,7,8,9,10].map(n => {
+                              const isSelected = cScore === n;
+                              return (
+                                <button
+                                  key={n}
+                                  type="button"
+                                  onClick={() => handleScoreChange(r.attributeId, 'comp', n)}
+                                  className={`py-1.5 text-xs font-black rounded-lg transition active:scale-90 font-mono flex items-center justify-center ${
+                                    isSelected
+                                      ? 'bg-slate-800 text-white shadow-sm ring-2 ring-slate-600'
+                                      : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-400'
+                                  }`}
+                                >
+                                  {n}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
                       </div>
                     )}
@@ -993,6 +1025,29 @@ export const EvaluationExecutionPage: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Sticky Bottom Action Bar no Mobile para Gravação Rápida */}
+      {activeTab === 'TECNICA' && (
+        <div className="md:hidden fixed bottom-14 left-0 right-0 z-30 p-2.5 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-xl flex items-center justify-between gap-3">
+          <div className="text-[11px] font-mono text-slate-500 truncate pl-1">
+            {activeComparison?.libusProduct?.name ? (
+              <span className="font-bold text-slate-800 truncate block">
+                {activeComparison.libusProduct.name}
+              </span>
+            ) : (
+              <span>Notas do par técnico</span>
+            )}
+          </div>
+          <button
+            onClick={handleSaveScores}
+            disabled={saving}
+            className="px-4 py-2.5 bg-libus-magenta hover:bg-libus-magentaHover text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition flex-shrink-0 uppercase tracking-wider font-mono active:scale-95 disabled:opacity-50"
+          >
+            <Save size={14} />
+            <span>{saving ? 'Gravando...' : 'Salvar Notas'}</span>
+          </button>
         </div>
       )}
     </div>

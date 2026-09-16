@@ -405,12 +405,12 @@ export const NewEvaluationWizard: React.FC = () => {
 
           {/* Filtros de Família & Busca */}
           <div className="bg-white p-3.5 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
-            {/* Pílulas Fluidas no Desktop com Flex Wrap e Touch no Mobile */}
-            <div className="flex flex-wrap items-center gap-1.5 py-0.5">
+            {/* Pílulas Fluidas no Desktop / Carrossel Horizontal no Mobile */}
+            <div className="flex items-center gap-1.5 py-0.5 overflow-x-auto pb-1 no-scrollbar flex-nowrap -mx-1 px-1 sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => setSelectedFamilySlug('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase transition flex items-center gap-1.5 active:scale-95 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase transition flex items-center gap-1.5 active:scale-95 flex-shrink-0 ${
                   selectedFamilySlug === 'all'
                     ? 'bg-libus-charcoal text-white shadow-sm ring-2 ring-slate-800/20'
                     : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
@@ -429,7 +429,7 @@ export const NewEvaluationWizard: React.FC = () => {
                     key={fam.id}
                     type="button"
                     onClick={() => setSelectedFamilySlug(fam.slug)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase transition flex items-center gap-1.5 active:scale-95 ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold uppercase transition flex items-center gap-1.5 active:scale-95 flex-shrink-0 ${
                       isSelected
                         ? 'bg-libus-magenta text-white shadow-md ring-2 ring-pink-500/30'
                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'

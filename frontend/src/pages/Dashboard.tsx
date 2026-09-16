@@ -112,34 +112,34 @@ export const DashboardPage: React.FC = () => {
     .slice(0, 3);
 
   return (
-    <div className="space-y-6">
-      {/* Banner Executivo Libus */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-libus-charcoal via-slate-900 to-slate-950 p-6 sm:p-8 text-white shadow-xl border border-slate-800">
+    <div className="space-y-4 sm:space-y-6">
+      {/* Banner Executivo Libus - Compacto em Mobile */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-libus-charcoal via-slate-900 to-slate-950 p-4 sm:p-6 md:p-8 text-white shadow-xl border border-slate-800">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 opacity-5 pointer-events-none flex items-center justify-center">
           <ShieldCheck size={260} className="text-white" />
         </div>
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div className="space-y-1.5">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 sm:gap-6">
+          <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-libus-magenta text-white text-[10px] font-bold tracking-wider uppercase font-mono">
+              <span className="px-2 py-0.5 rounded bg-libus-magenta text-white text-[9px] sm:text-[10px] font-bold tracking-wider uppercase font-mono">
                 {user?.role || 'TÉCNICO'}
               </span>
-              <span className="text-slate-400 text-xs font-mono">
+              <span className="text-slate-400 text-[10px] sm:text-xs font-mono">
                 ENGENHARIA DE APLICAÇÃO & HOMOLOGAÇÃO
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-              Painel de Testes de Campo & Laudos
+            <h1 className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight text-white leading-tight">
+              Painel de Testes & Laudos
             </h1>
-            <p className="text-slate-300 text-xs sm:text-sm max-w-2xl leading-relaxed">
+            <p className="text-slate-300 text-[11px] sm:text-xs md:text-sm max-w-2xl leading-relaxed hidden sm:block">
               Gestão de ensaios comparativos de EPIs, validação de C.A. e testes práticos de aceitação com colaboradores no posto de trabalho.
             </p>
           </div>
 
           <Link
             to="/evaluations/new"
-            className="inline-flex items-center justify-center gap-2 bg-libus-magenta hover:bg-libus-magentaHover text-white font-bold px-5 py-3 rounded-xl shadow-md transition transform active:scale-95 flex-shrink-0 text-xs tracking-wider uppercase font-mono"
+            className="inline-flex items-center justify-center gap-2 bg-libus-magenta hover:bg-libus-magentaHover text-white font-bold px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl shadow-md transition transform active:scale-95 flex-shrink-0 text-xs tracking-wider uppercase font-mono w-full sm:w-auto"
           >
             <Plus size={15} />
             <span>Novo Teste de Campo</span>
@@ -147,74 +147,74 @@ export const DashboardPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Faixa de Indicadores Reais de Campo & SESMT */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Faixa de Indicadores Reais de Campo & SESMT - Grid 2x2 no Mobile */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
         {/* Testes de Campo */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600">Testes de Campo</span>
-            <span className="text-[10px] font-mono text-slate-400">VOLUME</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Testes de Campo</span>
+            <span className="text-[9px] sm:text-[10px] font-mono text-slate-400 hidden sm:inline">VOLUME</span>
           </div>
-          <div className="my-2 flex items-baseline gap-2">
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono">{totalEvaluations}</p>
-            <span className="text-xs text-slate-500 font-medium">laudos</span>
+          <div className="my-1 sm:my-2 flex items-baseline gap-1.5 sm:gap-2">
+            <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono">{totalEvaluations}</p>
+            <span className="text-[10px] sm:text-xs text-slate-500 font-medium">laudos</span>
           </div>
-          <p className="text-[11px] text-slate-500 border-t border-slate-100 pt-2 font-medium">
-            {inProgressEvaluations} em andamento nas indústrias
+          <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
+            {inProgressEvaluations} em andamento
           </p>
         </div>
 
         {/* Empresas em Homologação */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600">Empresas Atendidas</span>
-            <span className="text-[10px] font-mono font-bold text-slate-500">CLIENTES</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Empresas</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 hidden sm:inline">CLIENTES</span>
           </div>
-          <div className="my-2 flex items-baseline gap-2">
-            <p className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono">{uniqueCompanies.size}</p>
-            <span className="text-xs text-slate-500 font-medium">indústrias</span>
+          <div className="my-1 sm:my-2 flex items-baseline gap-1.5 sm:gap-2">
+            <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono">{uniqueCompanies.size}</p>
+            <span className="text-[10px] sm:text-xs text-slate-500 font-medium">indústrias</span>
           </div>
-          <p className="text-[11px] text-slate-500 border-t border-slate-100 pt-2 font-medium">
-            {completedEvaluations} empresas com laudo emitido
+          <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
+            {completedEvaluations} laudos emitidos
           </p>
         </div>
 
         {/* Avaliação Média dos Usuários (TAU) */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600">Aceitação dos Usuários</span>
-            <span className="text-[10px] font-mono font-bold text-emerald-600">TAU / SESMT</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Aceitação TAU</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-emerald-600 hidden sm:inline">SESMT</span>
           </div>
-          <div className="my-2 flex items-baseline gap-1.5">
-            <p className="text-2xl sm:text-3xl font-black text-emerald-600 tracking-tight font-mono">
+          <div className="my-1 sm:my-2 flex items-baseline gap-1 sm:gap-1.5">
+            <p className="text-xl sm:text-3xl font-black text-emerald-600 tracking-tight font-mono">
               {avgSatisfactionScore}
             </p>
-            <span className="text-xs text-slate-400 font-mono font-bold">/ 10.0</span>
+            <span className="text-[10px] sm:text-xs text-slate-400 font-mono font-bold">/ 10</span>
           </div>
-          <p className="text-[11px] text-slate-500 border-t border-slate-100 pt-2 font-medium">
-            Média de conforto, ajuste e durabilidade
+          <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
+            Conforto & durabilidade
           </p>
         </div>
 
         {/* Principais Concorrentes Avaliados */}
-        <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
+        <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600">Pares Comparativos</span>
-            <span className="text-[10px] font-mono font-bold text-slate-500">DE-PARA</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Concorrentes</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 hidden sm:inline">DE-PARA</span>
           </div>
-          <div className="my-2 flex flex-wrap gap-1.5 items-center">
+          <div className="my-1 sm:my-2 flex flex-wrap gap-1 items-center">
             {topCompetitors.length > 0 ? (
               topCompetitors.map(([brand, count]) => (
-                <span key={brand} className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-800 text-[11px] font-mono font-bold border border-slate-200">
+                <span key={brand} className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-800 text-[10px] sm:text-[11px] font-mono font-bold border border-slate-200 truncate">
                   {brand} ({count})
                 </span>
               ))
             ) : (
-              <span className="text-xs text-slate-400 font-mono">Nenhum comparativo</span>
+              <span className="text-[11px] text-slate-400 font-mono">Nenhum</span>
             )}
           </div>
-          <p className="text-[11px] text-slate-500 border-t border-slate-100 pt-2 font-medium">
-            Marcas concorrentes testadas no 1x1
+          <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
+            Marcas testadas 1x1
           </p>
         </div>
       </div>
