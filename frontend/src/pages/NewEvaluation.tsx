@@ -386,11 +386,147 @@ export const NewEvaluationWizard: React.FC = () => {
         </div>
       )}
 
-      {/* 2. Layout Principal: Vitrine de EPIs Libus (Esquerda) + Bancada Ativa (Direita) */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+      {/* 2. Layout Principal: Vitrine de EPIs Libus + Bancada Ativa */}
+      <div className="flex flex-col md:grid md:grid-cols-12 gap-6 items-start">
 
-        {/* COLUNA DA ESQUERDA: Vitrine Visual de EPIs Libus (7 Colunas) */}
-        <div className="md:col-span-7 space-y-4">
+        {/* BANCADA DE HOMOLOGAÇÃO ATIVA (No Mobile aparece PRIMEIRO se tiver itens) */}
+        <div className="w-full md:col-span-5 md:order-2 space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className={`w-2.5 h-2.5 rounded-full ${comparisonPairs.length > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'}`}></span>
+              <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-900 flex items-center gap-2">
+                <span>Bancada de Teste</span>
+                <span className={`text-xs px-2 py-0.5 rounded-full font-black ${
+                  comparisonPairs.length > 0 ? 'bg-libus-magenta text-white' : 'bg-slate-200 text-slate-600'
+                }`}>
+                  {comparisonPairs.length}
+                </span>
+              </h3>
+            </div>
+            {comparisonPairs.length > 0 && (
+              <button
+                onClick={() => setComparisonPairs([])}
+                className="text-[10px] text-slate-400 hover:text-red-600 font-mono"
+              >
+                Limpar Bancada
+              </button>
+            )}
+          </div>
+
+          <div className="bg-slate-100/80 border border-slate-200 rounded-2xl p-3.5 sm:p-4 min-h-[140px] md:min-h-[580px] flex flex-col justify-between shadow-xs">
+            {comparisonPairs.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-8 space-y-2 sm:space-y-3">
+                <div className="w-10 h-10 sm:w-14 sm:h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-xs">
+                  <Layers size={20} className="sm:w-6 sm:h-6" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-800 uppercase font-mono">Bancada Vazia</h4>
+                  <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 max-w-xs leading-relaxed">
+                    Toque em qualquer EPI da vitrine abaixo para parear com o concorrente.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-2.5 overflow-y-auto max-h-[360px] md:max-h-[500px] pr-0.5">
+                {comparisonPairs.map((pair, idx) => (
+                  <div
+                    key={pair.id}
+                    className="p-3 bg-white rounded-xl border border-slate-200/90 shadow-2xs space-y-2.5 relative group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 uppercase tracking-wider">
+                        DUELO #{idx + 1} • {pair.libusProduct.category.name}
+                      </span>
+                      <button
+                        onClick={() => handleRemovePair(pair.id)}
+                        className="text-slate-400 hover:text-red-600 p-1 rounded-md hover:bg-slate-100 transition"
+                        title="Remover duelo"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+
+                    {/* Comparativo Visual 1x1 Compacto */}
+                    <div className="grid grid-cols-2 gap-2 items-center">
+                      {/* Lado Libus */}
+                      <div className="p-2 rounded-lg bg-slate-900 text-white flex items-center gap-2 min-w-0">
+                        {pair.libusProduct.imageUrl && (
+                          <img
+                            src={pair.libusProduct.imageUrl}
+                            alt={pair.libusProduct.name}
+                            className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-white p-0.5 object-contain flex-shrink-0"
+                          />
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <span className="text-[8px] font-mono font-bold text-libus-magenta block leading-none mb-0.5">LIBUS</span>
+                          <p className="text-[11px] sm:text-xs font-black text-white truncate">{pair.libusProduct.name}</p>
+                        </div>
+                      </div>
+
+                      {/* Lado Concorrente */}
+                      <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center gap-2 min-w-0">
+                        {pair.competitorImageUrl ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-white p-0.5 flex-shrink-0 flex items-center justify-center border border-slate-200 shadow-2xs overflow-hidden">
+                            <img
+                              src={pair.competitorImageUrl}
+                              alt={pair.competitorProductName}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ) : getManufacturerLogo(pair.competitorManufacturerName) ? (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-white p-0.5 flex-shrink-0 flex items-center justify-center border border-slate-200 shadow-2xs">
+                            <img
+                              src={getManufacturerLogo(pair.competitorManufacturerName)!}
+                              alt={pair.competitorManufacturerName}
+                              className="w-full h-full object-contain"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-slate-100 flex-shrink-0 flex items-center justify-center text-[8px] font-mono text-slate-400 font-bold">
+                            EPI
+                          </div>
+                        )}
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1">
+                            <span className="text-[8px] font-mono font-bold text-slate-500 block truncate leading-none mb-0.5">
+                              {pair.competitorManufacturerName}
+                            </span>
+                            {pair.isCustomNew && (
+                              <span className="text-[7px] font-mono font-bold bg-amber-100 text-amber-800 px-1 rounded">
+                                NOVO
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] sm:text-xs font-bold text-slate-800 truncate">{pair.competitorProductName}</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Rodapé da Bancada com Ação Rápida */}
+            {comparisonPairs.length > 0 && (
+              <div className="pt-3 mt-2 border-t border-slate-200 flex items-center justify-between">
+                <span className="text-[11px] sm:text-xs font-mono font-bold text-slate-600">
+                  {comparisonPairs.length} {comparisonPairs.length === 1 ? 'item pronto' : 'itens prontos'}
+                </span>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting}
+                  className="px-3.5 py-2 bg-libus-magenta hover:bg-libus-magentaHover text-white text-xs font-mono font-bold uppercase rounded-xl shadow-md transition flex items-center gap-1.5 active:scale-95"
+                >
+                  <span>Iniciar Laudo</span>
+                  <ArrowRight size={13} />
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* VITRINE DE EPIS LIBUS */}
+        <div className="w-full md:col-span-7 md:order-1 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-libus-magenta"></span>
@@ -514,135 +650,6 @@ export const NewEvaluationWizard: React.FC = () => {
           </div>
         </div>
 
-        {/* COLUNA DA DIREITA: Bancada de Homologação Ativa (5 Colunas) */}
-        <div className="md:col-span-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <h3 className="text-sm font-mono font-bold uppercase tracking-wider text-slate-900">
-                2. Bancada de Teste ({comparisonPairs.length})
-              </h3>
-            </div>
-            {comparisonPairs.length > 0 && (
-              <button
-                onClick={() => setComparisonPairs([])}
-                className="text-[10px] text-slate-400 hover:text-red-600 font-mono"
-              >
-                Limpar Bancada
-              </button>
-            )}
-          </div>
-
-          <div className="bg-slate-100/70 border border-slate-200 rounded-2xl p-4 min-h-[580px] flex flex-col justify-between">
-            {comparisonPairs.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-3">
-                <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 shadow-xs">
-                  <Layers size={24} />
-                </div>
-                <div>
-                  <h4 className="text-xs font-bold text-slate-800 uppercase font-mono">Bancada Vazia</h4>
-                  <p className="text-xs text-slate-500 mt-1 max-w-xs">
-                    Clique em qualquer EPI da vitrine à esquerda para configurar o confronto 1x1 com o concorrente.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3 overflow-y-auto max-h-[500px] pr-1">
-                {comparisonPairs.map((pair, idx) => (
-                  <div
-                    key={pair.id}
-                    className="p-3.5 bg-white rounded-xl border border-slate-200/90 shadow-xs space-y-3 relative group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-mono font-bold text-slate-400 uppercase">
-                        DUELO #{idx + 1} • {pair.libusProduct.category.name}
-                      </span>
-                      <button
-                        onClick={() => handleRemovePair(pair.id)}
-                        className="text-slate-400 hover:text-red-600 transition"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </div>
-
-                    {/* Comparativo Visual 1x1 Compacto */}
-                    <div className="grid grid-cols-2 gap-2 items-center">
-                      {/* Lado Libus */}
-                      <div className="p-2.5 rounded-lg bg-slate-900 text-white flex items-center gap-2 min-w-0">
-                        {pair.libusProduct.imageUrl && (
-                          <img
-                            src={pair.libusProduct.imageUrl}
-                            alt={pair.libusProduct.name}
-                            className="w-8 h-8 rounded bg-white p-0.5 object-contain flex-shrink-0"
-                          />
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <span className="text-[8px] font-mono font-bold text-libus-magenta block">LIBUS</span>
-                          <p className="text-xs font-black text-white truncate">{pair.libusProduct.name}</p>
-                        </div>
-                      </div>
-
-                      {/* Lado Concorrente */}
-                      <div className="p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center gap-2 min-w-0">
-                        {pair.competitorImageUrl ? (
-                          <div className="w-8 h-8 rounded bg-white p-0.5 flex-shrink-0 flex items-center justify-center border border-slate-200 shadow-2xs overflow-hidden">
-                            <img
-                              src={pair.competitorImageUrl}
-                              alt={pair.competitorProductName}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        ) : getManufacturerLogo(pair.competitorManufacturerName) ? (
-                          <div className="w-8 h-8 rounded bg-white p-0.5 flex-shrink-0 flex items-center justify-center border border-slate-200 shadow-2xs">
-                            <img
-                              src={getManufacturerLogo(pair.competitorManufacturerName)!}
-                              alt={pair.competitorManufacturerName}
-                              className="w-full h-full object-contain"
-                            />
-                          </div>
-                        ) : (
-                          <div className="w-8 h-8 rounded bg-slate-100 flex-shrink-0 flex items-center justify-center text-[9px] font-mono text-slate-400">
-                            EPI
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[8px] font-mono font-bold text-slate-500 block truncate">
-                              {pair.competitorManufacturerName}
-                            </span>
-                            {pair.isCustomNew && (
-                              <span className="text-[7px] font-mono font-bold bg-amber-100 text-amber-800 px-1 rounded">
-                                NOVO
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-xs font-bold text-slate-800 truncate">{pair.competitorProductName}</p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* Rodapé da Bancada com Ação */}
-            {comparisonPairs.length > 0 && (
-              <div className="pt-4 border-t border-slate-200 flex items-center justify-between">
-                <span className="text-xs font-mono font-bold text-slate-600">
-                  {comparisonPairs.length} {comparisonPairs.length === 1 ? 'item pronto' : 'itens prontos'}
-                </span>
-                <button
-                  onClick={handleSubmit}
-                  disabled={submitting}
-                  className="px-4 py-2 bg-libus-magenta hover:bg-libus-magentaHover text-white text-xs font-mono font-bold uppercase rounded-xl shadow-md transition flex items-center gap-1.5"
-                >
-                  <span>Avançar para Laudo</span>
-                  <ArrowRight size={13} />
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
       </div>
 
       {/* 3. Drawer Lateral de Pareamento (Aparece ao clicar em um produto Libus) */}
