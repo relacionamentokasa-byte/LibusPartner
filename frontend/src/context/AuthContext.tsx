@@ -19,9 +19,23 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('libus_token'));
-  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem('libus_token'));
+  const [user, setUser] = useState<User | null>(() => {
+    const saved = localStorage.getItem('libus_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(() => {
+    const savedToken = localStorage.getItem('libus_token');
+    const savedUser = localStorage.getItem('libus_user');
+    return Boolean(savedToken && !savedUser);
+  });
 
   const logout = () => {
     clearSession();
@@ -44,21 +58,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
-    async function loadUser() {
+    async function validateSession() {
       if (!token) {
         setIsLoading(false);
         return;
       }
       try {
         const data = await apiRequest('/auth/me');
-        setUser(data.user);
+        if (data?.user) {
+          setUser(data.user);
+          localStorage.setItem('libus_user', JSON.stringify(data.user));
+        }
       } catch (err) {
         logout();
       } finally {
         setIsLoading(false);
       }
     }
-    loadUser();
+    validateSession();
   }, [token]);
 
   const login = async (email: string, pass: string) => {
@@ -67,8 +84,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       body: JSON.stringify({ email, password: pass })
     });
     localStorage.setItem('libus_token', data.token);
+    localStorage.setItem('libus_user', JSON.stringify(data.user));
     setToken(data.token);
     setUser(data.user);
+    setIsLoading(false);
   };
 
   return (

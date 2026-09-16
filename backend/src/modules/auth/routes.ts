@@ -60,18 +60,7 @@ authRouter.post('/login', async (req: Request, res: Response) => {
 });
 
 authRouter.get('/me', authMiddleware, async (req: Request, res: Response) => {
-  const user = await prisma.user.findUnique({
-    where: { id: req.user!.id },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      createdAt: true
-    }
-  });
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
-  return res.json({ user });
+  return res.json({ user: req.user });
 });
 
 // Solicitação de Recuperação de Senha (Esqueceu a senha)
