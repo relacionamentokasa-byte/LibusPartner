@@ -1,18 +1,38 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3333/api';
+const API_URL = import.meta.env.VITE_API_URL || '/api';
 
 export const AUTH_UNAUTHORIZED_EVENT = 'libus:auth:unauthorized';
+export const ALVES_AUTH_UNAUTHORIZED_EVENT = 'alves:auth:unauthorized';
 
 export function clearSession() {
   localStorage.removeItem('libus_token');
   localStorage.removeItem('libus_user');
 }
 
+export function clearAlvesSession() {
+  localStorage.removeItem('alves_token');
+  localStorage.removeItem('alves_user');
+}
+
 export async function apiRequest(endpoint: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('libus_token');
+  return request(endpoint, options, true, 'libus');
+}
+
+export async function publicApiRequest(endpoint: string, options: RequestInit = {}) {
+  return request(endpoint, options, false, 'libus');
+}
+
+export async function alvesApiRequest(endpoint: string, options: RequestInit = {}) {
+  return request(endpoint, options, true, 'alves');
+}
+
+async function request(endpoint: string, options: RequestInit = {}, authenticated: boolean, domain: 'libus' | 'alves') {
+  const token = localStorage.getItem(domain === 'alves' ? 'alves_token' : 'libus_token');
+  const unauthorizedEvent = domain === 'alves' ? ALVES_AUTH_UNAUTHORIZED_EVENT : AUTH_UNAUTHORIZED_EVENT;
+  const clear = domain === 'alves' ? clearAlvesSession : clearSession;
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {})
+    ...(authenticated && token ? { Authorization: `Bearer ${token}` } : {})
   };
 
   const res = await fetch(`${API_URL}${endpoint}`, {
@@ -22,11 +42,10 @@ export async function apiRequest(endpoint: string, options: RequestInit = {}) {
 
   const data = await res.json().catch(() => ({}));
 
-  if (res.status === 401) {
-    clearSession();
-    // Dispara evento para sincronizar estado no AuthContext e redirecionar
+  if (authenticated && res.status === 401) {
+    clear();
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent(AUTH_UNAUTHORIZED_EVENT, { detail: data }));
+      window.dispatchEvent(new CustomEvent(unauthorizedEvent, { detail: data }));
     }
     throw new Error(data.error || 'Sessão expirada ou não autorizada');
   }

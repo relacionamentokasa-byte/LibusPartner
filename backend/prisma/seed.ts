@@ -513,60 +513,53 @@ async function main() {
     }
   }
 
-  // 6. Cadastrar Critérios Técnicos Padronizados e Normativos por Categoria
-  console.log('Cadastrando critérios técnicos normativos e auditáveis por categoria...');
+  // 6. Cadastrar Critérios Técnicos de Alta Performance de Campo (Fáceis de Entender)
+  console.log('Cadastrando critérios técnicos de alta performance de campo por categoria...');
 
   const standardizedCriteriaByCategory: Record<string, string[]> = {
     'capacetes': [
-      'Absorção de Impacto & Transmissão de Força (NBR 8221 / ANSI Z89.1)',
-      'Conforto da Suspensão & Distribuição de Peso (Têxtil / Plástica)',
-      'Sistema de Ajuste da Carneira (Catraca / Pino / Ajuste de Altura)',
-      'Conforto e Apoio de Nuca em Longas Jornadas',
-      'Estabilidade na Cabeça (Fixação com e sem jugular)',
-      'Acoplamento de Acessórios (Abafadores, Protetor Facial, Jugular de 3 pontos)',
-      'Isolamento Elétrico / Propriedade Dielétrica'
+      'Firmeza na Cabeça (Não sai do lugar nem cai ao olhar para cima/baixo)',
+      'Leveza e Alívio no Pescoço (Zero fadiga cervical no fim do turno)',
+      'Facilidade do Ajuste / Catraca (Regulagem rápida e suave, inclusive com luvas)',
+      'Conforto e Controle de Suor (Testeira absorvente e bom fluxo de ar)',
+      'Encaixe de Acessórios (Fixação firme de abafador e protetor facial nos slots)'
     ],
     'oculos': [
-      'Qualidade Óptica & Ausência de Distorção (Classe Óptica 1 - ANSI Z87.1)',
-      'Desempenho da Proteção Anti-Embaçante (Anti-Fog)',
-      'Resistência a Riscos & Durabilidade da Lente (Hard Coat)',
-      'Campo de Visão e Proteção Lateral / Multidirecional',
-      'Ergonomia e Conforto na Haste e Apoio Nasal (Ponte Suave)',
-      'Compatibilidade com Outros EPIs (Capacete e Abafador)'
+      'Resistência ao Embaçamento (Visão limpa sob calor, vapor e esforço físico)',
+      'Durabilidade contra Riscos (Lente resistente ao uso e limpezas diárias)',
+      'Conforto no Nariz e Orelhas (Ponte nasal macia e hastes sem pressão excessiva)',
+      'Firmeza no Rosto (Não escorrega no nariz com suor ou movimentação)',
+      'Clareza da Visão (Lente sem distorção óptica e com ampla visão periférica)'
     ],
     'plugs': [
-      'Nível e Eficiência de Atenuação do Ruído (NRRsf)',
-      'Conforto e Maciez de Inserção no Canal Auditivo',
-      'Material Hipoalergênico e Biocompatibilidade',
-      'Facilidade de Higienização e Durabilidade do Cordão'
+      'Vedação do Ruído no Conduto (Atenuação acústica eficiente no posto de trabalho)',
+      'Maciez e Conforto de Inserção (Material suave sem machucar o canal auditivo)',
+      'Higiene e Durabilidade (Facilidade de lavagem e resistência do cordão)'
     ],
     'abafadores': [
-      'Nível de Atenuação Acústica Real no Posto de Trabalho (NRRsf)',
-      'Pressão e Conforto das Almofadas circum-auriculares',
-      'Ajuste de Altura / Pressão da Haste na Cabeça',
-      'Propriedade Dielétrica (Ausência de partes metálicas expostas)',
-      'Facilidade de Substituição do Kit de Higiene (Espumas/Almofadas)',
-      'Encaixe e Estabilidade quando Acoplado ao Capacete'
+      'Vedação do Ruído (Atenuação acústica eficiente no posto de trabalho)',
+      'Conforto da Pressão no Crânio (Veda sem causar dor de cabeça ou aperto excessivo)',
+      'Maciez da Almofada (Espuma confortável que não resseca ou deforma)',
+      'Estabilidade do Ajuste (Conchas firmes na altura certa sem desregular)',
+      'Facilidade de Limpeza / Troca do Kit (Praticidade na manutenção e higiene)'
     ],
     'faciais': [
-      'Resistência a Alto Impacto de Partículas (ANSI Z87.1 - 2mm)',
-      'Qualidade Óptica e Amplitude do Campo de Visão Panorâmico',
-      'Cobertura Facial e Proteção de Queixo/Têmpora (Formato Bolha / Plano)',
-      'Articulação e Estabilidade de Basculamento (Levantar/Abaixar visor)',
-      'Compatibilidade de Acoplamento em Capacete / Carneira'
+      'Firmeza Levantado (Visor não cai sozinho quando colocado na posição aberta)',
+      'Proteção do Queixo e Mento (Cobertura inferior completa contra respingos e fagulhas)',
+      'Nitidez e Campo de Visão (Visão panorâmica sem distorções nas bordas)',
+      'Resistência a Pancadas / Impactos (Durabilidade mecânica contra partículas volantes)'
     ],
     'mascaras': [
-      'Vedação e Selagem Facial (Conforto do Bocal e Vedação)',
-      'Facilidade de Respiração (Baixa Resistência à Inalação/Exalação)',
-      'Ajuste e Conforto dos Tirantes Elásticos',
-      'Compatibilidade com Óculos de Segurança (Sem embaçamento)',
-      'Eficiência do Filtro / Cartucho contra Contaminantes Químicos/Poeiras'
+      'Facilidade para Respirar (Baixa resistência à inalação sem sensação de sufocamento)',
+      'Vedação no Rosto (Sem vazamento de ar ao falar ou mexer a cabeça)',
+      'Conforto do Material Facial (Silicone/TPE macio sem irritar ou marcar a pele)',
+      'Saída do Ar Quente (Válvula de exalação eficiente, mantendo o interior seco e fresco)',
+      'Campo de Visão com Filtros (Filtros compactos que não obstruem a visão inferior)'
     ],
     'cartuchos-filtros': [
-      'Eficiência de Filtração Química / Mecânica (Norma ABNT/NIOSH)',
-      'Facilidade de Encaixe e Travamento Tipo Baioneta',
-      'Distribuição Balanceada do Peso na Peça Facial',
-      'Vida Útil e Resistência à Saturação no Ambiente'
+      'Leveza e Equilíbrio no Rosto (Distribuição de peso sem puxar a máscara para frente)',
+      'Facilidade de Encaixe e Travamento (Engate baioneta firme, rápido e seguro)',
+      'Vida Útil e Capacidade de Retenção (Excelente durabilidade contra contaminantes)'
     ]
   };
 
@@ -655,6 +648,52 @@ async function main() {
     });
   }
 
+  const alvesAdminPassword = process.env.ALVES_ADMIN_PASSWORD;
+  if (!alvesAdminPassword) {
+    console.warn('⚠️ ALVES_ADMIN_PASSWORD não definida; administrador Alves não foi criado/atualizado.');
+  } else {
+    const alvesAdminPasswordHash = await bcrypt.hash(alvesAdminPassword, 10);
+    await prisma.alvesUser.upsert({
+      where: { email: 'alvesplanejados@gmail.com' },
+      update: { name: 'Administrador Alves Planejados', role: 'ADMIN', active: true },
+      create: {
+        name: 'Administrador Alves Planejados',
+        email: 'alvesplanejados@gmail.com',
+        passwordHash: alvesAdminPasswordHash,
+        role: 'ADMIN',
+        active: true
+      }
+    });
+    console.log('✓ Administrador Alves Planejados configurado.');
+  }
+
+  await prisma.alvesConfiguration.upsert({
+    where: { id: 'default' },
+    update: {},
+    create: {
+      id: 'default',
+      companyData: {
+        razaoSocial: 'Alves Planejados e Interiores Ltda.',
+        nomeFantasia: 'Alves Planejados',
+        cnpj: '',
+        ie: '',
+        telefone: '',
+        whatsapp: '',
+        email: '',
+        enderecoCompleto: '',
+        site: '',
+        logoUrl: '/alves_logo.png',
+        textoApresentacaoPadrao: 'Cada projeto Alves é pensado para transformar espaços em experiências de conforto, funcionalidade e identidade.',
+        mensagemWhatsappPadrao: 'Olá, {CLIENTE}! Sua proposta para o projeto {PROJETO} está pronta. Consulte pelo link: {LINK}',
+        termosGarantiaPadrao: '',
+        inclusoPadrao: [],
+        naoInclusoPadrao: []
+      },
+      standardClauses: []
+    }
+  });
+
+  console.log('✓ Configuração Alves Planejados verificada.');
   console.log('✓ Seed limpo concluído com 100% de integridade relacional.');
 }
 
