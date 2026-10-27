@@ -57,11 +57,6 @@ export const LoginPage: React.FC = () => {
     }
   };
 
-  const setDemoUser = (demoEmail: string) => {
-    setEmail(demoEmail);
-    setPassword('libus123');
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0F141F] via-[#151D2C] to-[#0A0D14] flex items-center justify-center p-4 selection:bg-libus-magenta selection:text-white">
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/10 animate-in fade-in zoom-in-95 duration-200">
@@ -142,36 +137,6 @@ export const LoginPage: React.FC = () => {
               <ArrowRight size={15} className="group-hover:translate-x-1 transition" />
             </button>
           </form>
-
-          {/* Perfis Demo para Facilidade */}
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-            <p className="text-[11px] text-slate-400 font-mono font-bold uppercase tracking-wider mb-2.5">
-              Ambiente de Homologação • Perfis:
-            </p>
-            <div className="flex justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setDemoUser('tecnico@libus.com.br')}
-                className="text-[11px] px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-mono font-bold text-slate-700 transition"
-              >
-                Técnico
-              </button>
-              <button
-                type="button"
-                onClick={() => setDemoUser('gestor@libus.com.br')}
-                className="text-[11px] px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-mono font-bold text-slate-700 transition"
-              >
-                Gestor
-              </button>
-              <button
-                type="button"
-                onClick={() => setDemoUser('admin@libus.com.br')}
-                className="text-[11px] px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg font-mono font-bold text-slate-700 transition"
-              >
-                Admin
-              </button>
-            </div>
-          </div>
         </div>
       </div>
 
