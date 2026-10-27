@@ -125,6 +125,8 @@ export interface EconomicCalculationInput {
   consumptionPeriodMonths?: number; // Período de análise em meses (padrão 12 meses / anual)
   lifespanCurrentMonths: number; // Vida útil do concorrente em meses
   lifespanLibusMonths: number;   // Vida útil do Libus em meses
+  disposalCostPerUnit?: number;  // Custo por descarte/troca (logística interna, MTR, destinação de resíduos)
+  productWeightGrams?: number;   // Peso aproximado da peça em gramas (para cálculo de resíduo evitado)
 }
 
 export interface EconomicCalculationResult {
@@ -132,9 +134,16 @@ export interface EconomicCalculationResult {
   annualUnitsLibus: number;
   costCurrentTotal: number;
   costLibusTotal: number;
-  costDifference: number;      // Custo atual - Custo Libus
-  economyGenerated: number;    // Economia bruta positiva
-  economyPercent: number;      // % de economia
+  costDifference: number;      // Custo atual - Custo Libus (Aquisição direta)
+  economyGenerated: number;    // Economia bruta positiva na compra
+  economyPercent: number;      // % de economia na compra
+  // Métricas de Descarte & ESG
+  unitsDiscardedCurrent: number;
+  unitsDiscardedLibus: number;
+  unitsDiscardedAvoided: number; // Quantidade de peças a menos enviadas ao lixo/aterro
+  disposalCostSavings: number;   // Economia financeira em descarte/logística
+  wasteKgReduced: number;        // Redução em Kg de resíduo gerado ao ano
+  totalAnnualSavings: number;    // Economia total consolidada (Aquisição + Descarte)
 }
 
 export function calculateEconomicResult(
@@ -144,6 +153,8 @@ export function calculateEconomicResult(
   const qty = input.quantity > 0 ? input.quantity : 1;
   const lifeCurrent = input.lifespanCurrentMonths > 0 ? input.lifespanCurrentMonths : 1;
   const lifeLibus = input.lifespanLibusMonths > 0 ? input.lifespanLibusMonths : 1;
+  const disposalCost = input.disposalCostPerUnit && input.disposalCostPerUnit >= 0 ? input.disposalCostPerUnit : 0;
+  const weightGrams = input.productWeightGrams && input.productWeightGrams > 0 ? input.productWeightGrams : 0;
 
   // Unidades consumidas no período = (meses / vidaUtil) * quantidade
   const annualUnitsCurrent = Math.ceil((months / lifeCurrent) * qty);
@@ -158,6 +169,14 @@ export function calculateEconomicResult(
     ? Number(((costDifference / costCurrentTotal) * 100).toFixed(1))
     : 0;
 
+  // Descarte e métricas ESG
+  const unitsDiscardedCurrent = annualUnitsCurrent;
+  const unitsDiscardedLibus = annualUnitsLibus;
+  const unitsDiscardedAvoided = Math.max(0, unitsDiscardedCurrent - unitsDiscardedLibus);
+  const disposalCostSavings = Number((unitsDiscardedAvoided * disposalCost).toFixed(2));
+  const wasteKgReduced = Number(((unitsDiscardedAvoided * weightGrams) / 1000).toFixed(2));
+  const totalAnnualSavings = Number((economyGenerated + disposalCostSavings).toFixed(2));
+
   return {
     annualUnitsCurrent,
     annualUnitsLibus,
@@ -165,6 +184,12 @@ export function calculateEconomicResult(
     costLibusTotal,
     costDifference,
     economyGenerated,
-    economyPercent
+    economyPercent,
+    unitsDiscardedCurrent,
+    unitsDiscardedLibus,
+    unitsDiscardedAvoided,
+    disposalCostSavings,
+    wasteKgReduced,
+    totalAnnualSavings
   };
 }

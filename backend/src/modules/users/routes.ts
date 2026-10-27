@@ -12,6 +12,7 @@ usersRouter.use(authMiddleware);
 usersRouter.get('/', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, res: Response) => {
   try {
     const users = await prisma.user.findMany({
+      where: req.user!.role === 'GESTOR' ? { role: 'TECNICO' } : undefined,
       select: {
         id: true,
         name: true,
@@ -33,10 +34,15 @@ usersRouter.get('/', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, r
   }
 });
 
+const passwordPolicySchema = z.string()
+  .min(8, 'A senha deve ter pelo menos 8 caracteres')
+  .regex(/[A-Za-z]/, 'A senha deve conter pelo menos uma letra')
+  .regex(/[0-9]/, 'A senha deve conter pelo menos um número');
+
 const createUserSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(4, 'Senha deve ter pelo menos 4 caracteres'),
+  password: passwordPolicySchema,
   role: z.enum(['ADMIN', 'GESTOR', 'TECNICO']).default('TECNICO')
 });
 
@@ -44,6 +50,9 @@ const createUserSchema = z.object({
 usersRouter.post('/', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, res: Response) => {
   try {
     const data = createUserSchema.parse(req.body);
+    if (req.user!.role === 'GESTOR' && data.role !== 'TECNICO') {
+      return res.status(403).json({ error: 'Gestores só podem criar usuários Técnicos.' });
+    }
 
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email.toLowerCase() }
@@ -61,7 +70,8 @@ usersRouter.post('/', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, 
         email: data.email.toLowerCase(),
         passwordHash,
         role: data.role,
-        active: true
+        active: true,
+        mustChangePassword: true
       },
       select: {
         id: true,
@@ -69,6 +79,7 @@ usersRouter.post('/', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, 
         email: true,
         role: true,
         active: true,
+        mustChangePassword: true,
         createdAt: true
       }
     });
@@ -101,6 +112,10 @@ usersRouter.patch('/:id/toggle-status', roleMiddleware(['ADMIN', 'GESTOR']), asy
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
+    if (currentUser.role === 'GESTOR' && targetUser.role !== 'TECNICO') {
+      return res.status(403).json({ error: 'Gestores só podem alterar o acesso de usuários Técnicos.' });
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id },
       data: { active: !targetUser.active },
@@ -123,12 +138,13 @@ usersRouter.patch('/:id/toggle-status', roleMiddleware(['ADMIN', 'GESTOR']), asy
 
 // Redefinir senha de um usuário (Apenas ADMIN e GESTOR)
 const resetPasswordSchema = z.object({
-  newPassword: z.string().min(4, 'Nova senha deve ter pelo menos 4 caracteres')
+  newPassword: passwordPolicySchema
 });
 
 usersRouter.post('/:id/reset-password', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const currentUser = req.user!;
     const { newPassword } = resetPasswordSchema.parse(req.body);
 
     const targetUser = await prisma.user.findUnique({
@@ -139,14 +155,21 @@ usersRouter.post('/:id/reset-password', roleMiddleware(['ADMIN', 'GESTOR']), asy
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
+    if (currentUser.role === 'GESTOR' && targetUser.role !== 'TECNICO') {
+      return res.status(403).json({ error: 'Gestores só podem redefinir a senha de usuários Técnicos.' });
+    }
+
     const passwordHash = await bcrypt.hash(newPassword, 10);
 
     await prisma.user.update({
       where: { id },
-      data: { passwordHash }
+      data: {
+        passwordHash,
+        mustChangePassword: true
+      }
     });
 
-    return res.json({ success: true, message: `Senha de ${targetUser.name} redefinida com sucesso.` });
+    return res.json({ success: true, message: `Senha de ${targetUser.name} redefinida com sucesso. No próximo acesso será exigida a criação de uma nova senha pessoal.` });
   } catch (err: any) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: err.errors[0].message });
@@ -156,8 +179,8 @@ usersRouter.post('/:id/reset-password', roleMiddleware(['ADMIN', 'GESTOR']), asy
   }
 });
 
-// Excluir usuário (Apenas ADMIN e GESTOR)
-usersRouter.delete('/:id', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, res: Response) => {
+// Excluir usuário (Apenas ADMIN)
+usersRouter.delete('/:id', roleMiddleware(['ADMIN']), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const currentUser = req.user!;

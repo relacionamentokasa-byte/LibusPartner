@@ -52,8 +52,9 @@ interface ComparisonPair {
   competitorProductId: string;
   competitorProductName: string;
   competitorImageUrl?: string;
-  competitorCA?: string;
   isCustomNew: boolean;
+  comparisonType: 'EQUIVALENCE' | 'UPGRADE';
+  upgradeJustification?: string;
 }
 
 export const NewEvaluationWizard: React.FC = () => {
@@ -79,12 +80,15 @@ export const NewEvaluationWizard: React.FC = () => {
 
   // Drawer Lateral de Pareamento 1x1
   const [pairingProduct, setPairingProduct] = useState<LibusProductItem | null>(null);
+  const [pairingType, setPairingType] = useState<'EQUIVALENCE' | 'UPGRADE'>('EQUIVALENCE');
+  const [upgradeJustification, setUpgradeJustification] = useState('');
   const [selectedManuf, setSelectedManuf] = useState('');
   const [selectedCompProdId, setSelectedCompProdId] = useState('');
   const [customManuf, setCustomManuf] = useState('');
   const [customProdName, setCustomProdName] = useState('');
-  const [customCA, setCustomCA] = useState('');
   const [isCustomMode, setIsCustomMode] = useState(false);
+  const [filterAllCategories, setFilterAllCategories] = useState(false);
+  const [compSearchQuery, setCompSearchQuery] = useState('');
 
   // Modal nova empresa
   const [showNewCompany, setShowNewCompany] = useState(false);
@@ -120,6 +124,11 @@ export const NewEvaluationWizard: React.FC = () => {
   // Abrir gaveta lateral para parear um produto
   const handleOpenPairing = (product: LibusProductItem) => {
     setPairingProduct(product);
+    setPairingType('EQUIVALENCE');
+    setUpgradeJustification('');
+    setFilterAllCategories(false);
+    setCompSearchQuery('');
+
     const categoryComps = competitorProducts.filter(cp => cp.categoryId === product.categoryId);
     const defaultEq = product.equivalences?.[0]?.competitorProduct;
     const firstComp = defaultEq || categoryComps[0];
@@ -135,7 +144,6 @@ export const NewEvaluationWizard: React.FC = () => {
     }
     setCustomManuf('');
     setCustomProdName('');
-    setCustomCA('');
   };
 
   // Confirmar adição na Bancada
@@ -144,14 +152,12 @@ export const NewEvaluationWizard: React.FC = () => {
 
     let manufName = selectedManuf;
     let prodName = '';
-    let ca = '';
     let prodId = selectedCompProdId;
     let compImg: string | undefined = undefined;
 
     if (isCustomMode) {
       manufName = customManuf.trim();
       prodName = customProdName.trim();
-      ca = customCA.trim();
       prodId = '';
       if (!manufName || !prodName) {
         alert('Preencha o fabricante e o nome do produto concorrente.');
@@ -160,7 +166,6 @@ export const NewEvaluationWizard: React.FC = () => {
     } else {
       const found = competitorProducts.find(cp => cp.id === selectedCompProdId);
       prodName = found?.name || '';
-      ca = found?.caNumber || '';
       compImg = found?.imageUrl;
     }
 
@@ -171,8 +176,9 @@ export const NewEvaluationWizard: React.FC = () => {
       competitorProductId: prodId,
       competitorProductName: prodName,
       competitorImageUrl: compImg,
-      competitorCA: ca,
-      isCustomNew: isCustomMode
+      isCustomNew: isCustomMode,
+      comparisonType: pairingType,
+      upgradeJustification: pairingType === 'UPGRADE' ? upgradeJustification.trim() : undefined
     };
 
     setComparisonPairs(prev => [...prev, newPair]);
@@ -234,12 +240,8 @@ export const NewEvaluationWizard: React.FC = () => {
       return;
     }
 
+    // Participantes agora são 100% opcionais na criação inicial
     const validParticipants = participants.filter(p => p.name.trim() !== '');
-    if (validParticipants.length === 0) {
-      setError('Adicione pelo menos um avaliador/funcionário no cliente.');
-      setShowConfigModal(true);
-      return;
-    }
 
     setSubmitting(true);
 
@@ -256,8 +258,7 @@ export const NewEvaluationWizard: React.FC = () => {
             body: JSON.stringify({
               name: pair.competitorProductName,
               manufacturerName: pair.competitorManufacturerName,
-              categoryId: pair.libusProduct.categoryId,
-              caNumber: pair.competitorCA || null
+              categoryId: pair.libusProduct.categoryId
             })
           });
           compProdId = res.product.id;
@@ -266,8 +267,10 @@ export const NewEvaluationWizard: React.FC = () => {
         finalComparisons.push({
           libusProductId: pair.libusProduct.id,
           competitorProductId: compProdId,
+          comparisonType: pair.comparisonType,
+          upgradeJustification: pair.upgradeJustification,
           orderIndex: i
-        });
+        } as any);
       }
 
       const payload = {
@@ -451,7 +454,12 @@ export const NewEvaluationWizard: React.FC = () => {
                     {/* Comparativo Visual 1x1 Compacto */}
                     <div className="grid grid-cols-2 gap-2 items-center">
                       {/* Lado Libus */}
-                      <div className="p-2 rounded-lg bg-slate-900 text-white flex items-center gap-2 min-w-0">
+                      <div className="p-2 rounded-lg bg-slate-900 text-white flex items-center gap-2 min-w-0 relative overflow-hidden">
+                        {pair.comparisonType === 'UPGRADE' && (
+                          <span className="absolute top-0 right-0 bg-amber-500 text-slate-950 font-black text-[7px] px-1 py-0.2 rounded-bl uppercase font-mono">
+                            ★ Upgrade
+                          </span>
+                        )}
                         {pair.libusProduct.imageUrl && (
                           <img
                             src={pair.libusProduct.imageUrl}
@@ -503,6 +511,12 @@ export const NewEvaluationWizard: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
+                    {pair.comparisonType === 'UPGRADE' && pair.upgradeJustification && (
+                      <div className="px-2 py-1 bg-amber-50/80 border border-amber-200/70 rounded-md text-[10px] text-amber-900 font-medium">
+                        <strong>Foco Upgrade:</strong> {pair.upgradeJustification}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -711,7 +725,62 @@ export const NewEvaluationWizard: React.FC = () => {
                 </div>
               </div>
 
-              {/* Opções do Concorrente */}
+              {/* Seletor de Tipo de Comparativo: Equivalência vs Upgrade */}
+              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3">
+                <label className="block text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600">
+                  Objetivo Deste Comparativo 1x1:
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPairingType('EQUIVALENCE')}
+                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
+                      pairingType === 'EQUIVALENCE'
+                        ? 'border-libus-magenta bg-white shadow-xs ring-2 ring-pink-500/20'
+                        : 'border-slate-200 bg-white/60 hover:bg-white text-slate-600'
+                    }`}
+                  >
+                    <span className="text-xs font-black text-slate-900 block">Equivalência</span>
+                    <span className="text-[10px] text-slate-500 mt-0.5 leading-tight">
+                      Mesma linha e categoria direta
+                    </span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPairingType('UPGRADE')}
+                    className={`p-3 rounded-xl border text-left transition flex flex-col justify-between ${
+                      pairingType === 'UPGRADE'
+                        ? 'border-amber-500 bg-amber-50/50 shadow-xs ring-2 ring-amber-500/30'
+                        : 'border-slate-200 bg-white/60 hover:bg-white text-slate-600'
+                    }`}
+                  >
+                    <span className="text-xs font-black text-amber-900 flex items-center gap-1">
+                      <span>★ Upgrade</span>
+                    </span>
+                    <span className="text-[10px] text-amber-800/80 mt-0.5 leading-tight">
+                      Evolução de tecnologia / conforto
+                    </span>
+                  </button>
+                </div>
+
+                {pairingType === 'UPGRADE' && (
+                  <div className="pt-2 space-y-1.5 animate-in fade-in duration-150">
+                    <label className="block text-[10px] font-mono font-bold text-amber-900 uppercase">
+                      Justificativa do Upgrade / Ganho Principal (Opcional):
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ex: Maior durabilidade, vedação de espuma, proteção antiembaçante superior..."
+                      value={upgradeJustification}
+                      onChange={(e) => setUpgradeJustification(e.target.value)}
+                      className="w-full px-3 py-1.5 bg-white border border-amber-300 rounded-lg text-xs text-slate-800 focus:ring-2 focus:ring-amber-400 placeholder:text-slate-400 font-medium"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Opções do Concorrente (Seleção Aberta e Flexível) */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-mono font-bold uppercase text-slate-700">
@@ -722,13 +791,42 @@ export const NewEvaluationWizard: React.FC = () => {
                     onClick={() => setIsCustomMode(!isCustomMode)}
                     className="text-[11px] font-mono font-bold text-libus-magenta hover:underline"
                   >
-                    {isCustomMode ? '← Usar Catálogo Homologado' : '+ Digitar outro modelo'}
+                    {isCustomMode ? '← Usar Catálogo' : '+ Digitar outro modelo'}
                   </button>
                 </div>
 
                 {!isCustomMode ? (
                   <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200/90">
-                    {/* Fabricantes que atendem a categoria deste produto */}
+                    {/* Toggle para Abrir Busca em Todas as Categorias (Seleção Totalmente Aberta) */}
+                    <div className="flex items-center justify-between pb-1 border-b border-slate-200/70">
+                      <span className="text-[10px] font-mono text-slate-500 font-bold uppercase">
+                        Filtrar concorrentes:
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => setFilterAllCategories(!filterAllCategories)}
+                        className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded transition ${
+                          filterAllCategories
+                            ? 'bg-slate-900 text-white'
+                            : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                        }`}
+                      >
+                        {filterAllCategories ? '★ Todo o Catálogo Concorrente' : `Mesma Categoria (${pairingProduct.category.name})`}
+                      </button>
+                    </div>
+
+                    {/* Busca Rápida de Concorrente */}
+                    <div>
+                      <input
+                        type="text"
+                        placeholder="Buscar por nome ou CA do concorrente..."
+                        value={compSearchQuery}
+                        onChange={(e) => setCompSearchQuery(e.target.value)}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder:text-slate-400 mb-2 focus:ring-2 focus:ring-libus-magenta/30"
+                      />
+                    </div>
+
+                    {/* Fabricantes que atendem a categoria deste produto ou todas */}
                     <div>
                       <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase mb-1">
                         Fabricante Concorrente
@@ -738,23 +836,36 @@ export const NewEvaluationWizard: React.FC = () => {
                         onChange={(e) => {
                           const m = e.target.value;
                           setSelectedManuf(m);
-                          const prods = competitorProducts.filter(
-                            cp => cp.categoryId === pairingProduct.categoryId && cp.manufacturer?.name === m
-                          );
+                          const prods = competitorProducts.filter(cp => {
+                            const matchCat = filterAllCategories || cp.categoryId === pairingProduct.categoryId;
+                            const matchQuery = !compSearchQuery || cp.name.toLowerCase().includes(compSearchQuery.toLowerCase());
+                            return matchCat && cp.manufacturer?.name === m && matchQuery;
+                          });
                           setSelectedCompProdId(prods[0]?.id || '');
                         }}
                         className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-libus-magenta/40"
                       >
-                        {Array.from(new Set(competitorProducts.filter(cp => cp.categoryId === pairingProduct.categoryId).map(cp => cp.manufacturer?.name))).map(m => (
+                        {Array.from(
+                          new Set(
+                            competitorProducts
+                              .filter(cp => {
+                                const matchCat = filterAllCategories || cp.categoryId === pairingProduct.categoryId;
+                                const matchQuery = !compSearchQuery || cp.name.toLowerCase().includes(compSearchQuery.toLowerCase());
+                                return matchCat && matchQuery;
+                              })
+                              .map(cp => cp.manufacturer?.name)
+                              .filter(Boolean)
+                          )
+                        ).map(m => (
                           <option key={m} value={m}>{m}</option>
                         ))}
                       </select>
                     </div>
 
-                    {/* Produtos do Fabricante */}
+                    {/* Produtos do Fabricante Selecionado */}
                     <div>
                       <label className="block text-[10px] font-mono font-bold text-slate-500 uppercase mb-1">
-                        Modelo Concorrente Equivalente
+                        Modelo Concorrente
                       </label>
                       <select
                         value={selectedCompProdId}
@@ -762,10 +873,15 @@ export const NewEvaluationWizard: React.FC = () => {
                         className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-libus-magenta/40"
                       >
                         {competitorProducts
-                          .filter(cp => cp.categoryId === pairingProduct.categoryId && cp.manufacturer?.name === selectedManuf)
+                          .filter(cp => {
+                            const matchCat = filterAllCategories || cp.categoryId === pairingProduct.categoryId;
+                            const matchManuf = !selectedManuf || cp.manufacturer?.name === selectedManuf;
+                            const matchQuery = !compSearchQuery || cp.name.toLowerCase().includes(compSearchQuery.toLowerCase());
+                            return matchCat && matchManuf && matchQuery;
+                          })
                           .map(cp => (
                             <option key={cp.id} value={cp.id}>
-                              {cp.name} {cp.caNumber ? `(CA ${cp.caNumber})` : ''}
+                              {cp.name}
                             </option>
                           ))}
                       </select>
@@ -774,7 +890,7 @@ export const NewEvaluationWizard: React.FC = () => {
                 ) : (
                   <div className="space-y-3 bg-amber-50/50 p-4 rounded-2xl border border-amber-200">
                     <p className="text-[11px] text-amber-800 font-medium">
-                      Cadastre um modelo concorrente novo na hora para este teste:
+                      Cadastre um modelo concorrente livre na hora para este teste:
                     </p>
                     <div>
                       <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">
@@ -782,7 +898,7 @@ export const NewEvaluationWizard: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        placeholder="Ex: 3M, Danny, MSA, Kalipso..."
+                        placeholder="Ex: 3M, Danny, MSA, Kalipso, Carbografite..."
                         value={customManuf}
                         onChange={(e) => setCustomManuf(e.target.value)}
                         className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800"
@@ -794,21 +910,9 @@ export const NewEvaluationWizard: React.FC = () => {
                       </label>
                       <input
                         type="text"
-                        placeholder="Ex: H-700, V-Gard, 2001..."
+                        placeholder="Ex: H-700, V-Gard, Spectra, Eco..."
                         value={customProdName}
                         onChange={(e) => setCustomProdName(e.target.value)}
-                        className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-mono font-bold text-slate-600 uppercase mb-1">
-                        Número do CA (Opcional)
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Ex: 12345"
-                        value={customCA}
-                        onChange={(e) => setCustomCA(e.target.value)}
                         className="w-full px-3.5 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800"
                       />
                     </div>
@@ -934,7 +1038,10 @@ export const NewEvaluationWizard: React.FC = () => {
 
               <div className="space-y-2 pt-2 border-t border-slate-100">
                 <div className="flex items-center justify-between">
-                  <label className="text-xs font-bold text-slate-700 font-mono">Avaliadores no Cliente</label>
+                  <div className="flex items-center gap-1.5">
+                    <label className="text-xs font-bold text-slate-700 font-mono">Avaliadores no Cliente</label>
+                    <span className="text-[10px] text-slate-400 font-mono">(Opcional)</span>
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddParticipant}
@@ -947,7 +1054,7 @@ export const NewEvaluationWizard: React.FC = () => {
                 <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
                   {participants.length === 0 ? (
                     <p className="text-xs text-slate-400 italic py-2">
-                      Nenhum avaliador adicionado ainda. Clique em "+ Adicionar" para cadastrar engenheiros ou técnicos do SESMT.
+                      Nenhum colaborador adicionado ainda. Você pode iniciar o laudo agora e adicionar os participantes a qualquer momento durante os ensaios.
                     </p>
                   ) : (
                     participants.map((p, idx) => (

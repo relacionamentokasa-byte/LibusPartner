@@ -79,6 +79,12 @@ evaluationsRouter.get('/:id', async (req: Request, res: Response) => {
     return res.status(404).json({ error: 'Avaliação não encontrada' });
   }
 
+  // Blindagem de segurança: Técnico só pode acessar suas próprias avaliações
+  const currentUser = req.user!;
+  if (currentUser.role === 'TECNICO' && evaluation.leadTechnicianId !== currentUser.id) {
+    return res.status(403).json({ error: 'Acesso negado: você só pode visualizar avaliações conduzidas por você.' });
+  }
+
   // Calcular resultados consolidados para cada comparação
   const processedComparisons = evaluation.comparisons.map(comp => {
     const technicalResult = calculateTechnicalResult(comp.responses);
@@ -109,7 +115,9 @@ const createEvaluationSchema = z.object({
   })).optional(),
   comparisons: z.array(z.object({
     libusProductId: z.string().min(1, 'Produto Libus é obrigatório'),
-    competitorProductId: z.string().min(1, 'Produto Concorrente é obrigatório')
+    competitorProductId: z.string().min(1, 'Produto Concorrente é obrigatório'),
+    comparisonType: z.enum(['EQUIVALENCE', 'UPGRADE']).default('EQUIVALENCE').optional(),
+    upgradeJustification: z.string().optional()
   })).min(1, 'Pelo menos um comparativo 1x1 deve ser incluído')
 });
 
@@ -140,6 +148,8 @@ evaluationsRouter.post('/', async (req: Request, res: Response) => {
           create: data.comparisons.map((c, idx) => ({
             libusProductId: c.libusProductId,
             competitorProductId: c.competitorProductId,
+            comparisonType: c.comparisonType || 'EQUIVALENCE',
+            upgradeJustification: c.upgradeJustification,
             orderIndex: idx
           }))
         }
@@ -272,6 +282,8 @@ const economicResultSchema = z.object({
   consumptionPeriod: z.string().default('MONTHLY'),
   lifespanCurrent: z.number().min(0.1, 'Vida útil do concorrente é obrigatória'),
   lifespanLibus: z.number().min(0.1, 'Vida útil Libus é obrigatória'),
+  disposalCostPerUnit: z.number().min(0).default(0).optional(),
+  productWeightGrams: z.number().min(0).default(0).optional(),
   notes: z.string().optional()
 });
 
@@ -285,7 +297,9 @@ evaluationsRouter.put('/comparisons/:comparisonId/economic', async (req: Request
       libusPrice: input.libusPrice,
       quantity: input.quantity,
       lifespanCurrentMonths: input.lifespanCurrent,
-      lifespanLibusMonths: input.lifespanLibus
+      lifespanLibusMonths: input.lifespanLibus,
+      disposalCostPerUnit: input.disposalCostPerUnit,
+      productWeightGrams: input.productWeightGrams
     });
 
     const economicResult = await prisma.evaluationEconomicResult.upsert({
@@ -302,6 +316,13 @@ evaluationsRouter.put('/comparisons/:comparisonId/economic', async (req: Request
         costDifference: calc.costDifference,
         economyGenerated: calc.economyGenerated,
         economyPercent: calc.economyPercent,
+        disposalCostPerUnit: input.disposalCostPerUnit ?? 0,
+        productWeightGrams: input.productWeightGrams ?? 0,
+        disposalCostSavings: calc.disposalCostSavings,
+        wasteKgReduced: calc.wasteKgReduced,
+        unitsDiscardedCurrent: calc.unitsDiscardedCurrent,
+        unitsDiscardedLibus: calc.unitsDiscardedLibus,
+        totalAnnualSavings: calc.totalAnnualSavings,
         notes: input.notes
       },
       create: {
@@ -317,6 +338,13 @@ evaluationsRouter.put('/comparisons/:comparisonId/economic', async (req: Request
         costDifference: calc.costDifference,
         economyGenerated: calc.economyGenerated,
         economyPercent: calc.economyPercent,
+        disposalCostPerUnit: input.disposalCostPerUnit ?? 0,
+        productWeightGrams: input.productWeightGrams ?? 0,
+        disposalCostSavings: calc.disposalCostSavings,
+        wasteKgReduced: calc.wasteKgReduced,
+        unitsDiscardedCurrent: calc.unitsDiscardedCurrent,
+        unitsDiscardedLibus: calc.unitsDiscardedLibus,
+        totalAnnualSavings: calc.totalAnnualSavings,
         notes: input.notes
       }
     });
@@ -344,14 +372,146 @@ evaluationsRouter.put('/comparisons/:comparisonId/economic', async (req: Request
   }
 });
 
-// Concluir Avaliação
+// Concluir e Homologar com Assinaturas Digitais na Tela
+const signEvaluationSchema = z.object({
+  technicianSignature: z.string().min(10, 'Assinatura do técnico é obrigatória'),
+  technicianSignerName: z.string().min(2, 'Nome do técnico é obrigatório'),
+  clientSignature: z.string().min(10, 'Assinatura do cliente é obrigatória'),
+  clientSignerName: z.string().min(2, 'Nome do responsável do cliente é obrigatório'),
+  clientSignerRole: z.string().min(2, 'Cargo do responsável é obrigatório'),
+  clientSignerDocument: z.string().optional(),
+  technicianInstructed: z.boolean().default(true),
+  instructionNotes: z.string().optional()
+});
+
+evaluationsRouter.patch('/:id/sign-and-complete', async (req: Request, res: Response) => {
+  try {
+    const user = req.user!;
+    const input = signEvaluationSchema.parse(req.body);
+
+    // Se for técnico, só pode assinar/concluir a própria avaliação
+    const existing = await prisma.evaluation.findUnique({
+      where: { id: req.params.id },
+      select: { leadTechnicianId: true }
+    });
+    if (!existing) {
+      return res.status(404).json({ error: 'Avaliação não encontrada' });
+    }
+    if (user.role === 'TECNICO' && existing.leadTechnicianId !== user.id) {
+      return res.status(403).json({ error: 'Acesso negado: você só pode homologar avaliações conduzidas por você.' });
+    }
+
+    const now = new Date();
+    const evaluation = await prisma.evaluation.update({
+      where: { id: req.params.id },
+      data: {
+        status: 'COMPLETED',
+        completedAt: now,
+        signedAt: now,
+        technicianSignature: input.technicianSignature,
+        technicianSignerName: input.technicianSignerName,
+        clientSignature: input.clientSignature,
+        clientSignerName: input.clientSignerName,
+        clientSignerRole: input.clientSignerRole,
+        clientSignerDocument: input.clientSignerDocument,
+        technicianInstructed: input.technicianInstructed,
+        instructionNotes: input.instructionNotes,
+        updatedById: user.id
+      },
+      include: {
+        company: { select: { tradeName: true } }
+      }
+    });
+
+    await createAuditLog({
+      user,
+      action: 'COMPLETE_AND_SIGN',
+      entity: 'EVALUATION',
+      entityId: evaluation.id,
+      details: {
+        companyName: evaluation.company.tradeName,
+        completedAt: now,
+        signedAt: now,
+        technicianSignerName: input.technicianSignerName,
+        clientSignerName: input.clientSignerName,
+        clientSignerRole: input.clientSignerRole,
+        clientSignerDocument: input.clientSignerDocument
+      },
+      ipAddress: req.ip
+    });
+
+    return res.json({ success: true, evaluation });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: err.errors[0].message });
+    }
+    console.error(err);
+    return res.status(500).json({ error: 'Erro ao assinar e homologar avaliação' });
+  }
+});
+
+// Concluir Avaliação (com termo de orientação técnica do especialista Libus)
+const completeEvaluationSchema = z.object({
+  technicianInstructed: z.boolean().default(true),
+  instructionNotes: z.string().optional()
+});
+
+// Adicionar ou atualizar participantes de uma avaliação
+const updateParticipantsSchema = z.object({
+  participants: z.array(z.object({
+    name: z.string().min(1, 'Nome do participante é obrigatório'),
+    roleOrArea: z.string().min(1, 'Área/Cargo é obrigatório'),
+    companyName: z.string().optional(),
+    email: z.string().optional(),
+    phone: z.string().optional()
+  }))
+});
+
+evaluationsRouter.put('/:id/participants', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { participants } = updateParticipantsSchema.parse(req.body);
+
+    // Substituir participantes da avaliação
+    await prisma.evaluationParticipant.deleteMany({
+      where: { evaluationId: id }
+    });
+
+    const created = await prisma.evaluationParticipant.createMany({
+      data: participants.map(p => ({
+        evaluationId: id,
+        name: p.name,
+        roleOrArea: p.roleOrArea,
+        companyName: p.companyName,
+        email: p.email,
+        phone: p.phone
+      }))
+    });
+
+    const updatedParticipants = await prisma.evaluationParticipant.findMany({
+      where: { evaluationId: id }
+    });
+
+    return res.json({ success: true, participants: updatedParticipants });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) {
+      return res.status(400).json({ error: err.errors[0].message });
+    }
+    return res.status(500).json({ error: 'Erro ao atualizar participantes' });
+  }
+});
+
 evaluationsRouter.patch('/:id/complete', async (req: Request, res: Response) => {
   const user = req.user!;
+  const { technicianInstructed = true, instructionNotes } = completeEvaluationSchema.parse(req.body || {});
+
   const evaluation = await prisma.evaluation.update({
     where: { id: req.params.id },
     data: {
       status: 'COMPLETED',
       completedAt: new Date(),
+      technicianInstructed,
+      instructionNotes,
       updatedById: user.id
     },
     include: {
@@ -366,7 +526,9 @@ evaluationsRouter.patch('/:id/complete', async (req: Request, res: Response) => 
     entityId: evaluation.id,
     details: {
       companyName: evaluation.company.tradeName,
-      completedAt: evaluation.completedAt
+      completedAt: evaluation.completedAt,
+      technicianInstructed,
+      instructionNotes
     },
     ipAddress: req.ip
   });
@@ -424,9 +586,9 @@ evaluationsRouter.delete('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Avaliação não encontrada' });
     }
 
-    // Técnicos só podem excluir suas próprias avaliações; Gestores/Admins podem excluir qualquer uma
-    if (user.role === 'TECNICO' && evaluation.leadTechnicianId !== user.id) {
-      return res.status(403).json({ error: 'Você não tem permissão para excluir esta avaliação' });
+    // Técnicos podem excluir apenas as próprias avaliações; Gestores não têm exclusão administrativa
+    if (user.role !== 'ADMIN' && evaluation.leadTechnicianId !== user.id) {
+      return res.status(403).json({ error: 'Apenas o Administrador pode excluir avaliações de terceiros.' });
     }
 
     // Gravar log de auditoria ANTES da exclusão física

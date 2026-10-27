@@ -7,6 +7,7 @@ export interface AuthenticatedUser {
   name: string;
   email: string;
   role: 'ADMIN' | 'GESTOR' | 'TECNICO';
+  mustChangePassword?: boolean;
 }
 
 declare global {
@@ -48,7 +49,8 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
         name: true,
         email: true,
         role: true,
-        active: true
+        active: true,
+        mustChangePassword: true
       }
     });
 
@@ -63,7 +65,8 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role as 'ADMIN' | 'GESTOR' | 'TECNICO'
+      role: user.role as 'ADMIN' | 'GESTOR' | 'TECNICO',
+      mustChangePassword: Boolean(user.mustChangePassword)
     };
 
     return next();

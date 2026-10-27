@@ -5,8 +5,8 @@ import { authMiddleware, roleMiddleware } from '../../middlewares/auth.js';
 export const auditRouter = Router();
 auditRouter.use(authMiddleware);
 
-// Apenas ADMIN e GESTOR podem visualizar logs de auditoria
-auditRouter.get('/', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, res: Response) => {
+// Apenas ADMIN pode visualizar logs de auditoria
+auditRouter.get('/', roleMiddleware(['ADMIN']), async (req: Request, res: Response) => {
   try {
     const { entity, action, userId, limit = '50', page = '1' } = req.query;
 
@@ -49,7 +49,7 @@ auditRouter.get('/', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, r
 });
 
 // Resumo/Estatísticas de ações recentes para o painel de gestão
-auditRouter.get('/stats', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, res: Response) => {
+auditRouter.get('/stats', roleMiddleware(['ADMIN']), async (req: Request, res: Response) => {
   try {
     const [recentEmissions, recentDeletions, totalLogs] = await Promise.all([
       prisma.auditLog.count({ where: { action: { in: ['EMISSION', 'EXPORT_PDF', 'COMPLETE'] } } }),

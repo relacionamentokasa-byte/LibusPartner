@@ -28,6 +28,7 @@ import {
 
 export const UsersManagementPage: React.FC = () => {
   const { user: currentUser } = useAuth();
+  const isAdmin = currentUser?.role === 'ADMIN';
   const [activeTab, setActiveTab] = useState<'USERS' | 'AUDIT'>('USERS');
 
   // --- ESTADOS DA ABA DE USUÁRIOS ---
@@ -327,17 +328,19 @@ export const UsersManagementPage: React.FC = () => {
           <span>Usuários & Técnicos ({users.length})</span>
         </button>
 
-        <button
-          onClick={() => setActiveTab('AUDIT')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-mono transition cursor-pointer ${
-            activeTab === 'AUDIT'
-              ? 'bg-slate-900 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
-          <History size={15} />
-          <span>Auditoria & Logs de Segurança</span>
-        </button>
+        {isAdmin && (
+          <button
+            onClick={() => setActiveTab('AUDIT')}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold font-mono transition cursor-pointer ${
+              activeTab === 'AUDIT'
+                ? 'bg-slate-900 text-white shadow-sm'
+                : 'text-slate-600 hover:bg-slate-100'
+            }`}
+          >
+            <History size={15} />
+            <span>Auditoria & Logs de Segurança</span>
+          </button>
+        )}
       </div>
 
       {/* ========================================================================= */}
@@ -368,7 +371,7 @@ export const UsersManagementPage: React.FC = () => {
 
             {/* Filtros Rápidos por Papel */}
             <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
-              {(['ALL', 'TECNICO', 'GESTOR', 'ADMIN'] as const).map((r) => (
+              {(isAdmin ? ['ALL', 'TECNICO', 'GESTOR', 'ADMIN'] as const : ['ALL', 'TECNICO'] as const).map((r) => (
                 <button
                   key={r}
                   onClick={() => setRoleFilter(r)}
@@ -409,6 +412,7 @@ export const UsersManagementPage: React.FC = () => {
               {filteredUsers.map((u) => {
                 const roleBadge = getRoleBadge(u.role);
                 const isSelf = u.id === currentUser?.id;
+                const canManageTarget = isAdmin || u.role === 'TECNICO';
 
                 return (
                   <div
@@ -458,21 +462,23 @@ export const UsersManagementPage: React.FC = () => {
                     {/* Barra de Ações Rápidas */}
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <button
-                          onClick={() => {
-                            setUserToReset(u);
-                            setResetError('');
-                            setResetSuccess('');
-                            setNewPassword('');
-                          }}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition font-mono"
-                          title="Redefinir Senha do Usuário"
-                        >
-                          <KeyRound size={13} className="text-slate-500" />
-                          <span>Senha</span>
-                        </button>
+                        {canManageTarget && (
+                          <button
+                            onClick={() => {
+                              setUserToReset(u);
+                              setResetError('');
+                              setResetSuccess('');
+                              setNewPassword('');
+                            }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition font-mono"
+                            title="Redefinir Senha do Usuário"
+                          >
+                            <KeyRound size={13} className="text-slate-500" />
+                            <span>Senha</span>
+                          </button>
+                        )}
 
-                        {!isSelf && (
+                        {isAdmin && !isSelf && (
                           <button
                             onClick={() => setUserToDelete(u)}
                             className="inline-flex items-center justify-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
@@ -483,28 +489,30 @@ export const UsersManagementPage: React.FC = () => {
                         )}
                       </div>
 
-                      <button
-                        onClick={() => handleToggleStatus(u)}
-                        disabled={isSelf || togglingId === u.id}
-                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition font-mono ${
-                          u.active
-                            ? 'text-emerald-700 bg-emerald-50 hover:bg-rose-50 hover:text-rose-700 border border-emerald-200 hover:border-rose-200'
-                            : 'text-slate-500 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200'
-                        } disabled:opacity-40 disabled:cursor-not-allowed`}
-                        title={u.active ? 'Clique para desativar acesso' : 'Clique para ativar acesso'}
-                      >
-                        {u.active ? (
-                          <>
-                            <CheckCircle2 size={13} className="text-emerald-600" />
-                            <span>Ativo</span>
-                          </>
-                        ) : (
-                          <>
-                            <XCircle size={13} className="text-slate-400" />
-                            <span>Inativo</span>
-                          </>
-                        )}
-                      </button>
+                      {canManageTarget && (
+                        <button
+                          onClick={() => handleToggleStatus(u)}
+                          disabled={isSelf || togglingId === u.id}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition font-mono ${
+                            u.active
+                              ? 'text-emerald-700 bg-emerald-50 hover:bg-rose-50 hover:text-rose-700 border border-emerald-200 hover:border-rose-200'
+                              : 'text-slate-500 bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 border border-slate-200 hover:border-emerald-200'
+                          } disabled:opacity-40 disabled:cursor-not-allowed`}
+                          title={u.active ? 'Clique para desativar acesso' : 'Clique para ativar acesso'}
+                        >
+                          {u.active ? (
+                            <>
+                              <CheckCircle2 size={13} className="text-emerald-600" />
+                              <span>Ativo</span>
+                            </>
+                          ) : (
+                            <>
+                              <XCircle size={13} className="text-slate-400" />
+                              <span>Inativo</span>
+                            </>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </div>
                 );
@@ -716,15 +724,18 @@ export const UsersManagementPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Senha Inicial de Acesso *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Senha Temporária Inicial *</label>
                 <input
                   type="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Mínimo 4 caracteres"
+                  placeholder="Mínimo 8 caracteres com letra e número"
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-libus-magenta/40 focus:border-libus-magenta text-slate-800"
                 />
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  O usuário será obrigado a criar uma nova senha pessoal no primeiro acesso.
+                </span>
               </div>
 
               <div>
@@ -735,8 +746,12 @@ export const UsersManagementPage: React.FC = () => {
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-bold font-mono focus:ring-2 focus:ring-libus-magenta/40 focus:border-libus-magenta text-slate-800 bg-white"
                 >
                   <option value="TECNICO">TÉCNICO (Execução de Campo e Laudos)</option>
-                  <option value="GESTOR">GESTOR (Visualização Geral e Equipe)</option>
-                  <option value="ADMIN">ADMINISTRADOR (Acesso Total)</option>
+                  {isAdmin && (
+                    <>
+                      <option value="GESTOR">GESTOR (Gestão Operacional e Técnicos)</option>
+                      <option value="ADMIN">ADMINISTRADOR (Acesso Total)</option>
+                    </>
+                  )}
                 </select>
               </div>
 
@@ -805,15 +820,18 @@ export const UsersManagementPage: React.FC = () => {
 
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Nova Senha Provisória *</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Nova Senha Temporária *</label>
                 <input
                   type="password"
                   required
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="Mínimo 4 caracteres"
+                  placeholder="Mínimo 8 caracteres com letra e número"
                   className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-slate-900 focus:border-slate-900 text-slate-800"
                 />
+                <span className="text-[11px] text-slate-400 mt-1 block">
+                  Ao entrar com esta senha temporária, o usuário será forçado a cadastrar uma nova senha pessoal.
+                </span>
               </div>
 
               <div className="flex justify-end gap-3 pt-3 border-t border-slate-100">

@@ -10,9 +10,14 @@ import { createAuditLog } from '../../lib/audit.js';
 
 export const authRouter = Router();
 
+const passwordSchema = z.string()
+  .min(8, 'A senha deve ter pelo menos 8 caracteres')
+  .regex(/[A-Za-z]/, 'A senha deve conter pelo menos uma letra')
+  .regex(/[0-9]/, 'A senha deve conter pelo menos um número');
+
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(4, 'Senha deve ter pelo menos 4 caracteres')
+  password: z.string().min(1, 'Senha é obrigatória')
 });
 
 authRouter.post('/login', async (req: Request, res: Response) => {
@@ -36,7 +41,8 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       id: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      mustChangePassword: user.mustChangePassword
     };
 
     const token = jwt.sign(payload, getJwtSecret(), {
@@ -97,7 +103,7 @@ authRouter.post('/forgot-password', async (req: Request, res: Response) => {
       }
     });
 
-    const clientUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const clientUrl = process.env.FRONTEND_URL || 'http://localhost:5180';
     const resetLink = `${clientUrl}/reset-password?token=${resetToken}`;
 
     await sendResetPasswordEmail({
@@ -159,6 +165,7 @@ authRouter.post('/reset-password-with-token', async (req: Request, res: Response
       where: { id: user.id },
       data: {
         passwordHash,
+        mustChangePassword: false,
         resetPasswordToken: null,
         resetPasswordExpires: null
       }
@@ -189,7 +196,7 @@ authRouter.post('/reset-password-with-token', async (req: Request, res: Response
 // Alteração de Senha do Próprio Usuário (Logado)
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Senha atual é obrigatória'),
-  newPassword: z.string().min(4, 'Nova senha deve ter pelo menos 4 caracteres')
+  newPassword: passwordSchema
 });
 
 authRouter.post('/change-password', authMiddleware, async (req: Request, res: Response) => {
@@ -210,13 +217,30 @@ authRouter.post('/change-password', authMiddleware, async (req: Request, res: Re
       return res.status(400).json({ error: 'Senha atual incorreta' });
     }
 
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ error: 'A nova senha deve ser diferente da senha atual' });
+    }
+
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: userId },
-      data: { passwordHash: newPasswordHash }
+      data: {
+        passwordHash: newPasswordHash,
+        mustChangePassword: false
+      }
     });
 
-    return res.json({ success: true, message: 'Senha alterada com sucesso' });
+    return res.json({
+      success: true,
+      message: 'Senha alterada com sucesso',
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        mustChangePassword: false
+      }
+    });
   } catch (err: any) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: err.errors[0].message });

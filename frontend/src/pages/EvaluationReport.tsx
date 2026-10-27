@@ -24,8 +24,14 @@ import {
   Eye,
   Maximize2,
   ZoomIn,
-  ZoomOut
+  ZoomOut,
+  Leaf,
+  Recycle,
+  Trash2,
+  PenTool,
+  Clock
 } from 'lucide-react';
+import { HomologationSignatureModal } from '../components/HomologationSignatureModal';
 
 export const EvaluationReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +40,7 @@ export const EvaluationReportPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
   const [showA4Guide, setShowA4Guide] = useState<boolean>(true);
+  const [showSignModal, setShowSignModal] = useState<boolean>(false);
 
   useEffect(() => {
     async function loadReport() {
@@ -92,21 +99,47 @@ export const EvaluationReportPage: React.FC = () => {
 
   // Cálculos consolidados gerais do Laudo
   let totalEconomicSavings = 0;
+  let totalDisposalSavings = 0;
+  let totalWasteKgAvoided = 0;
+  let totalPiecesDiscardAvoided = 0;
   let totalTechnicalScores = 0;
   let validComparisonsCount = 0;
+  let totalLibusAvg = 0;
+  let totalCompetitorAvg = 0;
+  let libusWinsCount = 0;
+  let tiesCount = 0;
 
   comparisons.forEach((comp: any) => {
-    if (comp.economicResult?.economyGenerated) {
-      totalEconomicSavings += comp.economicResult.economyGenerated;
+    if (comp.economicResult) {
+      const eco = comp.economicResult;
+      totalEconomicSavings += eco.totalAnnualSavings || eco.economyGenerated || 0;
+      totalDisposalSavings += eco.disposalCostSavings || 0;
+      totalWasteKgAvoided += eco.wasteKgReduced || 0;
+      const discardedCurr = eco.unitsDiscardedCurrent || 0;
+      const discardedLib = eco.unitsDiscardedLibus || 0;
+      totalPiecesDiscardAvoided += Math.max(0, discardedCurr - discardedLib);
     }
     const sup = comp.technicalResult?.libusSuperiorityPercent ?? comp.technicalResult?.superiorityPercent;
     if (sup !== undefined && sup !== null) {
       totalTechnicalScores += Number(sup);
       validComparisonsCount++;
     }
+
+    const lAvg = comp.technicalResult?.libusAverageScore ?? comp.technicalResult?.libusAverage;
+    const cAvg = comp.technicalResult?.competitorAverageScore ?? comp.technicalResult?.competitorAverage;
+
+    if (lAvg !== undefined && lAvg !== null) totalLibusAvg += Number(lAvg);
+    if (cAvg !== undefined && cAvg !== null) totalCompetitorAvg += Number(cAvg);
+
+    if (lAvg && cAvg) {
+      if (lAvg > cAvg) libusWinsCount++;
+      else if (lAvg === cAvg) tiesCount++;
+    }
   });
 
   const avgSuperiority = validComparisonsCount > 0 ? (totalTechnicalScores / validComparisonsCount).toFixed(1) : '100';
+  const overallLibusScore = validComparisonsCount > 0 ? (totalLibusAvg / validComparisonsCount).toFixed(1) : '-';
+  const overallCompetitorScore = validComparisonsCount > 0 ? (totalCompetitorAvg / validComparisonsCount).toFixed(1) : '-';
 
   return (
     <div className="space-y-6 max-w-[1300px] mx-auto pb-20">
@@ -176,6 +209,32 @@ export const EvaluationReportPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {/* Banner de Homologação / Assinatura Digital Pendente (Oculto na Impressão) */}
+      {!evaluation.signedAt && (
+        <div className="no-print bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 flex-shrink-0">
+              <PenTool size={20} />
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-amber-900 uppercase font-mono tracking-wider">
+                Assinaturas Digitais Pendentes
+              </h4>
+              <p className="text-xs text-amber-700 mt-0.5">
+                Este laudo ainda não possui as assinaturas manuscritas na tela do Especialista Libus e do Responsável pelo Cliente (SESMT).
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowSignModal(true)}
+            className="w-full sm:w-auto px-4 py-2.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-mono font-bold uppercase tracking-wider rounded-xl transition flex items-center justify-center gap-2 shadow-sm cursor-pointer"
+          >
+            <PenTool size={14} />
+            <span>Assinar na Tela Agora</span>
+          </button>
+        </div>
+      )}
 
       {/* ÁREA DE PRÉ-VISUALIZAÇÃO DE DOCUMENTO (ESTILO FOLHA DE PAPEL A4 REAL) */}
       <div
@@ -277,40 +336,149 @@ export const EvaluationReportPage: React.FC = () => {
             </div>
           </section>
 
-          {/* 3. SUMÁRIO EXECUTIVO DE SUPERIORIDADE E ECONOMIA */}
-          <section className="bg-slate-900 text-white rounded-xl p-2 shadow-xs break-inside-avoid print-exact print:bg-slate-900 print:text-white">
-            <div className="flex items-center gap-1.5 mb-1">
-              <Award className="text-libus-magenta" size={13} />
-              <h2 className="text-[9.5px] font-bold uppercase tracking-wider text-slate-300">
-                Sumário Executivo de Homologação
-              </h2>
+          {/* 3. SUMÁRIO EXECUTIVO DE SUPERIORIDADE E ECONOMIA CONSOLIDADA */}
+          <section className="bg-slate-900 text-white rounded-xl p-2.5 shadow-xs break-inside-avoid print-exact print:bg-slate-900 print:text-white">
+            <div className="flex items-center justify-between gap-1.5 mb-1.5 border-b border-white/10 pb-1">
+              <div className="flex items-center gap-1.5">
+                <Award className="text-libus-magenta" size={13} />
+                <h2 className="text-[9.5px] font-bold uppercase tracking-wider text-slate-200">
+                  Sumário Executivo & Média Global da Empresa ({company?.tradeName || 'Cliente'})
+                </h2>
+              </div>
+              {comparisons.length > 1 && (
+                <span className="text-[8px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
+                  PORTFÓLIO MULTI-ITEM ({comparisons.length} EPIs CONSOLIDADOS)
+                </span>
+              )}
             </div>
 
-            <div className="grid grid-cols-3 gap-2 text-center divide-x divide-white/10">
+            <div className="grid grid-cols-4 gap-2 text-center divide-x divide-white/10">
               <div className="space-y-0.5">
                 <span className="text-[8px] uppercase tracking-wider text-slate-400">Pares Homologados</span>
                 <p className="text-sm font-bold text-white leading-tight">{comparisons.length}</p>
-                <span className="text-[7.5px] text-slate-400 block">EPIs comparados</span>
-              </div>
-
-              <div className="space-y-0.5">
-                <span className="text-[8px] uppercase tracking-wider text-emerald-400 font-bold">
-                  Superioridade Técnica
+                <span className="text-[7.5px] text-slate-400 block">
+                  {libusWinsCount} superados / {tiesCount} equivalentes
                 </span>
-                <p className="text-sm font-bold text-emerald-400 leading-tight">+{avgSuperiority}%</p>
-                <span className="text-[7.5px] text-slate-300 block">Norma & Ergonomia</span>
               </div>
 
               <div className="space-y-0.5">
                 <span className="text-[8px] uppercase tracking-wider text-slate-300 font-bold">
-                  Economia Anual
+                  Score Médio Libus vs Atual
                 </span>
-                <p className="text-sm font-bold text-white leading-tight">
+                <div className="flex items-center justify-center gap-1.5 text-sm font-bold leading-tight">
+                  <span className="text-white">{overallLibusScore}</span>
+                  <span className="text-slate-500 text-[10px]">vs</span>
+                  <span className="text-slate-400">{overallCompetitorScore}</span>
+                </div>
+                <span className="text-[7.5px] text-slate-300 block">Média de notas (1 a 10)</span>
+              </div>
+
+              <div className="space-y-0.5">
+                <span className="text-[8px] uppercase tracking-wider text-emerald-400 font-bold">
+                  Superioridade Média Global
+                </span>
+                <p className="text-sm font-bold text-emerald-400 leading-tight">+{avgSuperiority}%</p>
+                <span className="text-[7.5px] text-slate-300 block">Norma, Ergonomia e Campo</span>
+              </div>
+
+              <div className="space-y-0.5">
+                <span className="text-[8px] uppercase tracking-wider text-slate-300 font-bold">
+                  Economia Anual Total (TCO)
+                </span>
+                <p className="text-sm font-bold text-emerald-400 leading-tight">
                   R$ {totalEconomicSavings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </p>
-                <span className="text-[7.5px] text-slate-400 block">Ganho Financeiro</span>
+                <span className="text-[7.5px] text-slate-400 block">Aquisição direta + Descarte</span>
               </div>
             </div>
+
+            {/* Painel ESG & Economia Circular Consolidada (quando houver métricas de resíduo ou descarte) */}
+            {(totalWasteKgAvoided > 0 || totalPiecesDiscardAvoided > 0 || totalDisposalSavings > 0) && (
+              <div className="mt-2 pt-2 border-t border-white/10 bg-emerald-950/40 -mx-1 px-2.5 py-1.5 rounded-lg border border-emerald-500/20 text-[8.5px] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5">
+                  <div className="p-1 rounded-md bg-emerald-500/20 text-emerald-400">
+                    <Leaf size={12} />
+                  </div>
+                  <div>
+                    <span className="text-[8px] font-bold uppercase tracking-wider text-emerald-300 block">
+                      Impacto ESG & Redução de Resíduos Industriais (Economia Circular)
+                    </span>
+                    <span className="text-[7.5px] text-slate-300">
+                      Menor frequência de descarte pela maior durabilidade e ciclo de vida dos EPIs Libus
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 text-right">
+                  {totalPiecesDiscardAvoided > 0 && (
+                    <div>
+                      <span className="text-[7px] text-slate-400 uppercase block">Descartes Evitados:</span>
+                      <span className="font-mono font-bold text-emerald-300 text-[9.5px]">
+                        -{totalPiecesDiscardAvoided.toLocaleString('pt-BR')} peças/ano
+                      </span>
+                    </div>
+                  )}
+                  {totalWasteKgAvoided > 0 && (
+                    <div>
+                      <span className="text-[7px] text-slate-400 uppercase block">Resíduo Plástico/Sólido Evitado:</span>
+                      <span className="font-mono font-bold text-emerald-300 text-[9.5px]">
+                        -{totalWasteKgAvoided.toLocaleString('pt-BR', { minimumFractionDigits: 1 })} kg/ano
+                      </span>
+                    </div>
+                  )}
+                  {totalDisposalSavings > 0 && (
+                    <div>
+                      <span className="text-[7px] text-slate-400 uppercase block">Economia Logística/MTR:</span>
+                      <span className="font-mono font-bold text-emerald-300 text-[9.5px]">
+                        +R$ {totalDisposalSavings.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Tabela Resumo Rápido da Matriz quando houver múltiplos EPIs */}
+            {comparisons.length > 1 && (
+              <div className="mt-2 pt-2 border-t border-white/10 overflow-hidden text-[8.5px]">
+                <span className="text-[7.5px] uppercase tracking-wider text-slate-400 font-bold block mb-1">
+                  Matriz Sintética de Portfólio Avaliado ({comparisons.length} Postos / EPIs)
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 font-sans">
+                  {comparisons.map((c: any, i: number) => {
+                    const lib = c.libusProduct;
+                    const comp = c.competitorProduct;
+                    const t = c.technicalResult;
+                    const e = c.economicResult;
+                    const sup = t?.libusSuperiorityPercent ?? t?.superiorityPercent ?? 0;
+                    return (
+                      <div
+                        key={c.id || i}
+                        className="bg-white/5 border border-white/10 rounded-md p-1.5 flex items-center justify-between gap-2"
+                      >
+                        <div className="min-w-0">
+                          <span className="text-[7.5px] text-pink-400 font-mono font-bold block">
+                            PAR #{i + 1} • {lib?.category?.name || 'EPI'}
+                          </span>
+                          <p className="text-[8px] font-bold text-slate-200 truncate">{lib?.name}</p>
+                          <span className="text-[7px] text-slate-400 truncate block">vs {comp?.name || 'Atual'}</span>
+                        </div>
+                        <div className="text-right flex-shrink-0">
+                          <span className="inline-block px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[8px] border border-emerald-500/30">
+                            +{sup}%
+                          </span>
+                          {e?.economyGenerated && (
+                            <span className="block text-[7px] text-slate-300 font-mono mt-0.5">
+                              +R$ {Math.round(e.economyGenerated).toLocaleString('pt-BR')}/ano
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* 4. FICHAS COMPARATIVAS 1x1 DETALHADAS */}
@@ -318,10 +486,10 @@ export const EvaluationReportPage: React.FC = () => {
             <div className="border-b border-slate-200 pb-1 flex items-center justify-between">
               <h2 className="text-[10.5px] font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
                 <ShieldCheck className="text-libus-magenta" size={14} />
-                <span>Matriz Comparativa Técnica & Normativa (1x1)</span>
+                <span>Matriz Comparativa de Performance de Campo (1x1)</span>
               </h2>
               <span className="text-[9px] text-slate-500 font-semibold">
-                Critérios avaliados com notas de 1 a 10
+                Critérios práticos avaliados com notas de 1 a 10
               </span>
             </div>
 
@@ -339,13 +507,18 @@ export const EvaluationReportPage: React.FC = () => {
                 >
                   {/* Cabeçalho do Par */}
                   <div className="flex flex-row justify-between items-center gap-2 border-b border-slate-100 pb-1">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="px-1.5 py-0.5 rounded bg-slate-900 text-white text-[8px] font-bold">
                         PAR #{idx + 1}
                       </span>
                       <span className="text-[10px] font-bold text-slate-700 uppercase">
                         {libus?.category?.name || 'Proteção Individual'}
                       </span>
+                      {comp.comparisonType === 'UPGRADE' && (
+                        <span className="px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-300 text-[8px] font-bold font-mono uppercase flex items-center gap-1">
+                          <span>★ PROPOSTA DE UPGRADE</span>
+                        </span>
+                      )}
                     </div>
                     {tech && (
                       <div className="flex items-center gap-1 text-[9px] font-bold font-mono">
@@ -356,6 +529,16 @@ export const EvaluationReportPage: React.FC = () => {
                       </div>
                     )}
                   </div>
+
+                  {/* Justificativa Executiva de Upgrade (quando aplicável) */}
+                  {comp.comparisonType === 'UPGRADE' && comp.upgradeJustification && (
+                    <div className="p-2 bg-amber-50/70 rounded-lg border border-amber-200/80 text-[8.5px] text-amber-950 flex items-start gap-1.5">
+                      <span className="font-bold text-amber-900 uppercase tracking-wider block font-mono text-[8px] whitespace-nowrap">
+                        Direcionamento de Upgrade:
+                      </span>
+                      <span className="font-medium">{comp.upgradeJustification}</span>
+                    </div>
+                  )}
 
                   {/* Bloco Lado a Lado: Libus vs Concorrente */}
                   <div className="grid grid-cols-2 gap-2.5">
@@ -414,18 +597,6 @@ export const EvaluationReportPage: React.FC = () => {
                         </div>
                         <h3 className="font-bold text-slate-800 text-[11px] truncate leading-tight">{competitor?.name}</h3>
                         <div className="flex items-center gap-2 text-[9px] text-slate-600">
-                          {competitor?.caNumber && (
-                            <a
-                              href={getCaConsultUrl(competitor.caNumber)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-bold bg-white px-1.5 py-0.2 rounded border border-slate-200 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5 print:border-slate-300"
-                              title={`Consultar Certificado de Aprovação CA ${competitor.caNumber} no Ministério do Trabalho`}
-                            >
-                              <span>CA: {competitor.caNumber}</span>
-                              <ExternalLink size={7} className="no-print opacity-70" />
-                            </a>
-                          )}
                           <span>Média: <strong className="text-slate-800 text-[10px]">{tech?.competitorAverageScore?.toFixed(1) || tech?.competitorAverage?.toFixed(1) || '-'}</strong></span>
                         </div>
                       </div>
@@ -499,29 +670,61 @@ export const EvaluationReportPage: React.FC = () => {
 
                   {/* Bloco Econômico do Par */}
                   {eco && (
-                    <div className="p-2 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-4 gap-2 text-[9px] print-exact font-sans">
-                      <div>
-                        <span className="text-[8px] text-slate-400 uppercase font-medium block">Custo Unitário Libus:</span>
-                        <span className="font-bold text-slate-900">
-                          R$ {eco.libusPrice?.toFixed(2)} ({eco.lifespanLibus}m)
-                        </span>
+                    <div className="space-y-1.5 font-sans">
+                      <div className="p-2 bg-slate-50 rounded-lg border border-slate-200 grid grid-cols-4 gap-2 text-[9px] print-exact">
+                        <div>
+                          <span className="text-[8px] text-slate-400 uppercase font-medium block">Custo Unitário Libus:</span>
+                          <span className="font-bold text-slate-900">
+                            R$ {eco.libusPrice?.toFixed(2)} ({eco.lifespanLibus}m)
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[8px] text-slate-400 uppercase font-medium block">Custo Unitário Atual:</span>
+                          <span className="font-bold text-slate-700">
+                            R$ {eco.currentPrice?.toFixed(2)} ({eco.lifespanCurrent}m)
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-[8px] text-slate-400 uppercase font-medium block">Usuários Ativos:</span>
+                          <span className="font-bold text-slate-800">{eco.quantity} colab.</span>
+                        </div>
+                        <div>
+                          <span className="text-[8px] text-emerald-600 font-bold uppercase block">Economia Direta Compra:</span>
+                          <span className="font-bold text-emerald-700 text-[10px]">
+                            R$ {eco.economyGenerated?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({eco.economyPercent?.toFixed(1)}%)
+                          </span>
+                        </div>
                       </div>
-                      <div>
-                        <span className="text-[8px] text-slate-400 uppercase font-medium block">Custo Unitário Atual:</span>
-                        <span className="font-bold text-slate-700">
-                          R$ {eco.currentPrice?.toFixed(2)} ({eco.lifespanCurrent}m)
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-[8px] text-slate-400 uppercase font-medium block">Usuários Ativos:</span>
-                        <span className="font-bold text-slate-800">{eco.quantity} colab.</span>
-                      </div>
-                      <div>
-                        <span className="text-[8px] text-emerald-600 font-bold uppercase block">Economia Gerada:</span>
-                        <span className="font-bold text-emerald-700 text-[10px]">
-                          R$ {eco.economyGenerated?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({eco.economyPercent?.toFixed(1)}%)
-                        </span>
-                      </div>
+
+                      {/* Sub-bloco de Descarte & ESG do Par (se houver dados) */}
+                      {(eco.wasteKgReduced > 0 || eco.disposalCostSavings > 0 || (eco.unitsDiscardedCurrent - eco.unitsDiscardedLibus) > 0) && (
+                        <div className="px-2 py-1.5 bg-emerald-50/60 rounded-md border border-emerald-200/80 flex items-center justify-between text-[8px] text-slate-700 print-exact">
+                          <div className="flex items-center gap-1.5 font-semibold text-emerald-900">
+                            <Leaf size={10} className="text-emerald-600" />
+                            <span>Impacto ESG Par:</span>
+                            <span className="font-normal text-slate-600">
+                              {eco.unitsDiscardedCurrent} trocas atuais vs {eco.unitsDiscardedLibus} Libus ({Math.max(0, eco.unitsDiscardedCurrent - eco.unitsDiscardedLibus)} descartes evitados/ano)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            {eco.wasteKgReduced > 0 && (
+                              <span className="font-mono text-emerald-800">
+                                <strong>-{eco.wasteKgReduced} kg</strong> resíduo
+                              </span>
+                            )}
+                            {eco.disposalCostSavings > 0 && (
+                              <span className="font-mono text-emerald-800">
+                                <strong>+R$ {eco.disposalCostSavings?.toFixed(2)}</strong> logística/MTR
+                              </span>
+                            )}
+                            {eco.totalAnnualSavings > 0 && (
+                              <span className="font-mono font-bold text-emerald-900 bg-emerald-100/80 px-1.5 py-0.5 rounded border border-emerald-300">
+                                TCO Total: R$ {eco.totalAnnualSavings?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
@@ -529,7 +732,7 @@ export const EvaluationReportPage: React.FC = () => {
             })}
           </section>
 
-          {/* 5. PARECER CONCLUSIVO & TERMO DE HOMOLOGAÇÃO */}
+          {/* 5. PARECER CONCLUSIVO, ORIENTAÇÃO TÉCNICA NR-6 & TERMO DE HOMOLOGAÇÃO */}
           <section className="space-y-2 pt-2 border-t-2 border-slate-900 break-inside-avoid">
             <div className="space-y-0.5">
               <h2 className="text-[9.5px] font-bold uppercase tracking-wider text-slate-900 flex items-center gap-1.5">
@@ -541,24 +744,115 @@ export const EvaluationReportPage: React.FC = () => {
               </p>
             </div>
 
-            {/* Quadro de Assinaturas Formais */}
+            {/* Cláusula de Conformidade Técnica & Orientação Prévia de Uso (NR-6) */}
+            <div className="p-2 rounded-lg bg-slate-50 border border-slate-200 text-[8.5px] space-y-1 font-sans">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-slate-900 flex items-center gap-1">
+                  <ShieldCheck size={11} className="text-libus-magenta" />
+                  <span>Conformidade de Treinamento & Orientação Técnica Prévia (Item 6.6.1 da NR-6):</span>
+                </span>
+                <span className={`px-2 py-0.2 rounded font-mono font-bold text-[8px] ${
+                  evaluation.technicianInstructed !== false
+                    ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-amber-100 text-amber-800 border border-amber-300'
+                }`}>
+                  {evaluation.technicianInstructed !== false ? 'ORIENTAÇÃO TÉCNICA MINISTRADA' : 'SEM ORIENTAÇÃO PRÉVIA REGISTRADA'}
+                </span>
+              </div>
+              <p className="text-slate-600 text-[8px] leading-normal">
+                {evaluation.technicianInstructed !== false
+                  ? 'Atesta-se que todos os colaboradores participantes receberam instrução técnica presencial do especialista Libus sobre a correta colocação, ajuste ergonômico, vedação e limites de uso dos EPIs antes do início dos testes práticos.'
+                  : 'Os testes foram executados sem a comprovação de orientação técnica prévia formalizada pelo especialista Libus no ato do ensaio.'}
+              </p>
+              {evaluation.instructionNotes && (
+                <div className="mt-1 pt-1 border-t border-slate-200/80 text-[8px] text-slate-700">
+                  <strong className="text-slate-900">Observações de Colocação / Campo: </strong>
+                  <span>{evaluation.instructionNotes}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Quadro de Assinaturas Formais e Certificação Digital */}
             <div className="grid grid-cols-2 gap-8 pt-2.5 text-center font-sans">
-              <div className="space-y-0.5">
-                <div className="border-b border-slate-400 w-3/4 mx-auto"></div>
-                <p className="text-[9.5px] font-bold text-slate-900">{leadTechnician?.name}</p>
-                <p className="text-[7.5px] text-slate-500 uppercase">
-                  Engenharia de Aplicação & Homologação • Libus do Brasil
-                </p>
+              {/* Coluna Especialista Libus */}
+              <div className="space-y-0.5 flex flex-col justify-end">
+                {evaluation.technicianSignature ? (
+                  <div className="flex flex-col items-center">
+                    <div className="h-14 flex items-center justify-center">
+                      <img
+                        src={evaluation.technicianSignature}
+                        alt="Assinatura Especialista Libus"
+                        className="max-h-12 max-w-[180px] object-contain mix-blend-multiply"
+                      />
+                    </div>
+                    <div className="border-b border-slate-700 w-3/4 mx-auto"></div>
+                    <p className="text-[9.5px] font-bold text-slate-900 mt-0.5">
+                      {evaluation.technicianSignerName || leadTechnician?.name}
+                    </p>
+                    <p className="text-[7.5px] text-slate-500 uppercase">
+                      Engenharia de Aplicação & Homologação • Libus do Brasil
+                    </p>
+                    {evaluation.signedAt && (
+                      <span className="text-[7px] text-emerald-700 font-mono flex items-center justify-center gap-0.5 mt-0.5">
+                        <CheckCircle2 size={8} className="text-emerald-600" />
+                        Assinado digitalmente em {new Date(evaluation.signedAt).toLocaleDateString('pt-BR')} às {new Date(evaluation.signedAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="border-b border-slate-400 w-3/4 mx-auto mb-1"></div>
+                    <p className="text-[9.5px] font-bold text-slate-900">{leadTechnician?.name}</p>
+                    <p className="text-[7.5px] text-slate-500 uppercase">
+                      Engenharia de Aplicação & Homologação • Libus do Brasil
+                    </p>
+                    <span className="text-[7px] text-slate-400 font-mono block mt-0.5">Pendente de assinatura na tela</span>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-0.5">
-                <div className="border-b border-slate-400 w-3/4 mx-auto"></div>
-                <p className="text-[9.5px] font-bold text-slate-900">
-                  {participants[0]?.name || 'Responsável Técnico / SESMT'}
-                </p>
-                <p className="text-[7.5px] text-slate-500 uppercase">
-                  Gestão de Segurança do Trabalho / Compras • {company?.tradeName}
-                </p>
+              {/* Coluna Responsável do Cliente / SESMT */}
+              <div className="space-y-0.5 flex flex-col justify-end">
+                {evaluation.clientSignature ? (
+                  <div className="flex flex-col items-center">
+                    <div className="h-14 flex items-center justify-center">
+                      <img
+                        src={evaluation.clientSignature}
+                        alt="Assinatura Responsável Cliente"
+                        className="max-h-12 max-w-[180px] object-contain mix-blend-multiply"
+                      />
+                    </div>
+                    <div className="border-b border-slate-700 w-3/4 mx-auto"></div>
+                    <p className="text-[9.5px] font-bold text-slate-900 mt-0.5">
+                      {evaluation.clientSignerName || participants[0]?.name || 'Responsável Técnico / SESMT'}
+                    </p>
+                    <p className="text-[7.5px] text-slate-500 uppercase">
+                      {evaluation.clientSignerRole || 'Gestão de Segurança do Trabalho / Compras'} • {company?.tradeName}
+                    </p>
+                    {evaluation.clientSignerDocument && (
+                      <p className="text-[7px] text-slate-400 font-mono">
+                        Reg/Doc: {evaluation.clientSignerDocument}
+                      </p>
+                    )}
+                    {evaluation.signedAt && (
+                      <span className="text-[7px] text-emerald-700 font-mono flex items-center justify-center gap-0.5 mt-0.5">
+                        <CheckCircle2 size={8} className="text-emerald-600" />
+                        Validado em campo pelo SESMT
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="border-b border-slate-400 w-3/4 mx-auto mb-1"></div>
+                    <p className="text-[9.5px] font-bold text-slate-900">
+                      {participants[0]?.name || 'Responsável Técnico / SESMT'}
+                    </p>
+                    <p className="text-[7.5px] text-slate-500 uppercase">
+                      Gestão de Segurança do Trabalho / Compras • {company?.tradeName}
+                    </p>
+                    <span className="text-[7px] text-slate-400 font-mono block mt-0.5">Pendente de assinatura na tela</span>
+                  </div>
+                )}
               </div>
             </div>
           </section>
@@ -571,6 +865,23 @@ export const EvaluationReportPage: React.FC = () => {
 
         </div>
       </div>
+
+      {/* Modal de Homologação e Assinaturas Acionado pelo Laudo */}
+      <HomologationSignatureModal
+        isOpen={showSignModal}
+        onClose={() => setShowSignModal(false)}
+        evaluationId={evaluation.id}
+        companyName={company?.tradeName || 'Cliente'}
+        defaultTechnicianName={evaluation.technicianSignerName || leadTechnician?.name || ''}
+        participants={participants}
+        onSuccess={(updatedEval) => {
+          setEvaluation({
+            ...evaluation,
+            ...updatedEval,
+            status: 'COMPLETED'
+          });
+        }}
+      />
     </div>
   );
 };

@@ -694,7 +694,7 @@ async function main() {
   });
 
   console.log('✓ Configuração Alves Planejados verificada.');
-  console.log('✓ Seed limpo concluído com 100% de integridade relacional.');
+  console.log('✓ Seed Libus Partner e Alves concluído com integridade relacional.');
 }
 
 main()

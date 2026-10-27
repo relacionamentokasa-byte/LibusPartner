@@ -25,7 +25,7 @@ export async function alvesApiRequest(endpoint: string, options: RequestInit = {
   return request(endpoint, options, true, 'alves');
 }
 
-async function request(endpoint: string, options: RequestInit = {}, authenticated: boolean, domain: 'libus' | 'alves') {
+async function request(endpoint: string, options: RequestInit = {}, authenticated: boolean, domain: 'libus' | 'alves' = 'libus') {
   const token = localStorage.getItem(domain === 'alves' ? 'alves_token' : 'libus_token');
   const unauthorizedEvent = domain === 'alves' ? ALVES_AUTH_UNAUTHORIZED_EVENT : AUTH_UNAUTHORIZED_EVENT;
   const clear = domain === 'alves' ? clearAlvesSession : clearSession;

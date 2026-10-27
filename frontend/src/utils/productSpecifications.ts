@@ -27,7 +27,7 @@ export const productSpecsDictionary: Record<string, ProductSpec> = {
     packaging: 'Caixa master c/ 20 unidades'
   },
   andes: {
-    caNumber: '46039',
+    caNumber: '49941',
     internalCode: '902140',
     description: 'Capacete de proteção para trabalho em altura (NR-35) e resgate em espaços confinados (NR-33). Casco sem aba frontal para visão vertical desobstruída de 180° e máxima mobilidade.',
     features: [
@@ -37,7 +37,7 @@ export const productSpecsDictionary: Record<string, ProductSpec> = {
       'Clips em poliamida integrados para fixação firme de lanterna de cabeça',
       'Isolação dielétrica e proteção contra deformação lateral (LD)'
     ],
-    standards: ['ABNT NBR 8221 / EN 12492 (Alpinismo & Altura)', 'NR-35 / NR-33', 'ANSI Z89.1 Type 1 Class C'],
+    standards: ['ABNT NBR 8221 / EN 12492 (Alpinismo & Altura)', 'NR-35 / NR-33', 'ANSI Z89.1 Type 1 Class C', 'C.A. 49941 MTE'],
     applications: ['Trabalho em altura (NR-35)', 'Acesso por corda e resgate técnico', 'Espaço confinado (NR-33)', 'Torres de energia e telecomunicações', 'Parques eólicos e montagens'],
     packaging: 'Caixa individual com bolsa protetora'
   },
@@ -50,7 +50,7 @@ export const productSpecsDictionary: Record<string, ProductSpec> = {
       'Tira absorvedora de suor em poliuretano microperfurado lavável e substituível',
       'Design clássico de alta durabilidade com ranhuras estruturais de reforço'
     ],
-    standards: ['ABNT NBR 8221:2003 (Classe B)', 'NR-6 MTE', 'Certificado de Aprovação Ativo'],
+    standards: ['ABNT NBR 8221:2003 (Classe B)', 'NR-6 MTE', 'Certificado de Aprovação C.A. 35735 MTE'],
     applications: ['Siderurgia', 'Pátios de mineração', 'Portos e estaleiros', 'Linhas de produção pesada'],
     packaging: 'Caixa c/ 25 unidades'
   },
@@ -62,7 +62,7 @@ export const productSpecsDictionary: Record<string, ProductSpec> = {
       'Carneira anatômica com apoio cervical estendido',
       'Excelente distribuição de peso na calota craniana reduzindo fadiga muscular'
     ],
-    standards: ['ABNT NBR 8221 (Classe B)', 'ANSI Z89.1'],
+    standards: ['ABNT NBR 8221 (Classe B)', 'ANSI Z89.1', 'C.A. 35735 MTE'],
     applications: ['Indústria automotiva', 'Petroquímica', 'Operações fabris contínuas'],
     packaging: 'Caixa c/ 20 unidades'
   },

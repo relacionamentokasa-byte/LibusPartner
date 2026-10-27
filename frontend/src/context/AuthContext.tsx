@@ -6,13 +6,15 @@ export interface User {
   name: string;
   email: string;
   role: 'ADMIN' | 'GESTOR' | 'TECNICO';
+  mustChangePassword?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (email: string, pass: string) => Promise<void>;
+  login: (email: string, pass: string) => Promise<User>;
   logout: () => void;
+  updateUser: (partialUser: Partial<User>) => void;
   isLoading: boolean;
 }
 
@@ -78,7 +80,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     validateSession();
   }, [token]);
 
-  const login = async (email: string, pass: string) => {
+  const updateUser = (partialUser: Partial<User>) => {
+    setUser(prev => {
+      if (!prev) return null;
+      const updated = { ...prev, ...partialUser };
+      localStorage.setItem('libus_user', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const login = async (email: string, pass: string): Promise<User> => {
     const data = await apiRequest('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password: pass })
@@ -88,10 +99,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(data.token);
     setUser(data.user);
     setIsLoading(false);
+    return data.user;
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, token, login, logout, updateUser, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

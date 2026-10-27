@@ -25,8 +25,12 @@ export const LoginPage: React.FC = () => {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
-      navigate('/', { replace: true });
+      const loggedUser = await login(email, password);
+      if (loggedUser?.mustChangePassword) {
+        navigate('/force-change-password', { replace: true });
+      } else {
+        navigate('/', { replace: true });
+      }
     } catch (err: any) {
       setError(err.message || 'Falha ao realizar login');
     } finally {

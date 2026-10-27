@@ -20,11 +20,16 @@ import {
   FileCheck2,
   FileSpreadsheet,
   Clock,
-  Trash2
+  Trash2,
+  UserPlus,
+  Plus,
+  X,
+  Edit2
 } from 'lucide-react';
 import { getManufacturerLogo } from '../utils/manufacturerLogos';
 import { getCaConsultUrl } from '../utils/caHelper';
 import { ExternalLink } from 'lucide-react';
+import { HomologationSignatureModal } from '../components/HomologationSignatureModal';
 
 export const EvaluationExecutionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +42,23 @@ export const EvaluationExecutionPage: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  // Estado do Modal de Homologação com Termo de Orientação Técnica (NR-6)
+  const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [technicianInstructed, setTechnicianInstructed] = useState(true);
+  const [instructionNotes, setInstructionNotes] = useState('');
+  const [completing, setCompleting] = useState(false);
+
+  // Estado do Modal de Gerenciamento de Participantes / Equipe
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [savingParticipants, setSavingParticipants] = useState(false);
+  const [modalParticipants, setModalParticipants] = useState<Array<{
+    name: string;
+    roleOrArea: string;
+    companyName?: string;
+    email?: string;
+    phone?: string;
+  }>>([]);
+
   // Estados locais das notas por comparação
   const [scoresMap, setScoresMap] = useState<Record<string, Record<string, { libus: number | null; comp: number | null; na: boolean }>>>({});
 
@@ -47,6 +69,8 @@ export const EvaluationExecutionPage: React.FC = () => {
     quantity: number;
     lifespanCurrent: number;
     lifespanLibus: number;
+    disposalCostPerUnit: number;
+    productWeightGrams: number;
   }>>({});
 
   useEffect(() => {
@@ -74,7 +98,9 @@ export const EvaluationExecutionPage: React.FC = () => {
               libusPrice: comp.economicResult.libusPrice,
               quantity: comp.economicResult.quantity,
               lifespanCurrent: comp.economicResult.lifespanCurrent,
-              lifespanLibus: comp.economicResult.lifespanLibus
+              lifespanLibus: comp.economicResult.lifespanLibus,
+              disposalCostPerUnit: comp.economicResult.disposalCostPerUnit || 0,
+              productWeightGrams: comp.economicResult.productWeightGrams || 0
             };
           } else {
             initialEconomic[comp.id] = {
@@ -82,7 +108,9 @@ export const EvaluationExecutionPage: React.FC = () => {
               libusPrice: 28.5,
               quantity: 50,
               lifespanCurrent: 3,
-              lifespanLibus: 6
+              lifespanLibus: 6,
+              disposalCostPerUnit: 0,
+              productWeightGrams: 0
             };
           }
         });
@@ -187,13 +215,87 @@ export const EvaluationExecutionPage: React.FC = () => {
   };
 
   const handleCompleteEvaluation = async () => {
-    if (!confirm('Deseja homologar oficialmente esta avaliação?')) return;
     try {
-      await apiRequest(`/evaluations/${id}/complete`, { method: 'PATCH' });
-      setEvaluation({ ...evaluation, status: 'COMPLETED' });
+      setCompleting(true);
+      const res = await apiRequest(`/evaluations/${id}/complete`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          technicianInstructed,
+          instructionNotes: instructionNotes.trim() || undefined
+        })
+      });
+      setEvaluation({
+        ...evaluation,
+        status: 'COMPLETED',
+        completedAt: res.evaluation?.completedAt || new Date().toISOString(),
+        technicianInstructed,
+        instructionNotes
+      });
+      setShowCompleteModal(false);
       alert('Laudo técnico homologado com sucesso!');
     } catch (err: any) {
       alert(err.message || 'Erro ao concluir avaliação');
+    } finally {
+      setCompleting(false);
+    }
+  };
+
+  const handleOpenParticipantsModal = () => {
+    if (evaluation?.participants && evaluation.participants.length > 0) {
+      setModalParticipants(
+        evaluation.participants.map((p: any) => ({
+          name: p.name,
+          roleOrArea: p.roleOrArea,
+          companyName: p.companyName || '',
+          email: p.email || '',
+          phone: p.phone || ''
+        }))
+      );
+    } else {
+      setModalParticipants([
+        { name: '', roleOrArea: 'Operador / Produção', companyName: evaluation?.company?.tradeName || '' }
+      ]);
+    }
+    setShowParticipantsModal(true);
+  };
+
+  const handleAddParticipantRow = () => {
+    setModalParticipants([
+      ...modalParticipants,
+      { name: '', roleOrArea: 'Operador / Produção', companyName: evaluation?.company?.tradeName || '' }
+    ]);
+  };
+
+  const handleRemoveParticipantRow = (index: number) => {
+    setModalParticipants(modalParticipants.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateParticipantField = (index: number, field: string, value: string) => {
+    const updated = [...modalParticipants];
+    updated[index] = { ...updated[index], [field]: value };
+    setModalParticipants(updated);
+  };
+
+  const handleSaveParticipants = async () => {
+    try {
+      setSavingParticipants(true);
+      const validParticipants = modalParticipants.filter(p => p.name.trim() !== '');
+
+      const res = await apiRequest(`/evaluations/${id}/participants`, {
+        method: 'PUT',
+        body: JSON.stringify({ participants: validParticipants })
+      });
+
+      setEvaluation({
+        ...evaluation,
+        participants: res.participants || []
+      });
+      setShowParticipantsModal(false);
+      alert('Equipe de participantes atualizada com sucesso!');
+    } catch (err: any) {
+      alert(err.message || 'Erro ao atualizar participantes');
+    } finally {
+      setSavingParticipants(false);
     }
   };
 
@@ -263,7 +365,7 @@ export const EvaluationExecutionPage: React.FC = () => {
             </Link>
             {evaluation.status !== 'COMPLETED' && (
               <button
-                onClick={handleCompleteEvaluation}
+                onClick={() => setShowCompleteModal(true)}
                 className="px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-md transition flex items-center gap-2 tracking-wide uppercase font-mono"
               >
                 <CheckCircle2 size={15} /> Homologar
@@ -291,12 +393,22 @@ export const EvaluationExecutionPage: React.FC = () => {
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
                   DUELO #{activeComparisonIndex + 1} • {activeComparison.libusProduct?.category?.name || 'EPI'}
                 </span>
+                {activeComparison.comparisonType === 'UPGRADE' && (
+                  <span className="text-[9px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-md uppercase flex items-center gap-1">
+                    <span>★ PROPOSTA DE UPGRADE</span>
+                  </span>
+                )}
               </div>
               <div className="text-xs sm:text-sm font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
                 <span className="text-libus-magenta">{activeComparison.libusProduct?.name}</span>
                 <span className="text-slate-400 font-normal">vs</span>
                 <span className="text-slate-700">{activeComparison.competitorProduct?.name}</span>
               </div>
+              {activeComparison.comparisonType === 'UPGRADE' && activeComparison.upgradeJustification && (
+                <p className="text-[11px] text-amber-900 font-medium mt-0.5">
+                  <strong>Foco do Upgrade:</strong> {activeComparison.upgradeJustification}
+                </p>
+              )}
             </div>
           </div>
 
@@ -330,13 +442,28 @@ export const EvaluationExecutionPage: React.FC = () => {
             Equipe Participante:
           </span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {evaluation.participants?.map((p: any) => (
-            <div key={p.id} className="text-xs px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 font-semibold shadow-xs flex items-center gap-1.5">
-              <span>{p.name}</span>
-              <span className="text-[10px] text-slate-400 font-mono">[{p.roleOrArea}]</span>
-            </div>
-          ))}
+        <div className="flex flex-wrap items-center gap-2">
+          {evaluation.participants && evaluation.participants.length > 0 ? (
+            evaluation.participants.map((p: any) => (
+              <div key={p.id} className="text-xs px-3 py-1 bg-white border border-slate-200 rounded-lg text-slate-800 font-semibold shadow-xs flex items-center gap-1.5">
+                <span>{p.name}</span>
+                <span className="text-[10px] text-slate-400 font-mono">[{p.roleOrArea}]</span>
+              </div>
+            ))
+          ) : (
+            <span className="text-xs text-slate-400 italic">
+              Nenhum participante cadastrado ainda (opcional)
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleOpenParticipantsModal}
+            className="text-xs px-2.5 py-1 bg-white hover:bg-pink-50 text-libus-magenta border border-pink-200 hover:border-libus-magenta rounded-lg font-bold font-mono transition flex items-center gap-1 shadow-2xs"
+            title="Adicionar ou editar operadores e técnicos participantes"
+          >
+            <UserPlus size={13} />
+            <span>{evaluation.participants?.length > 0 ? 'Editar Equipe' : '+ Adicionar Participantes'}</span>
+          </button>
         </div>
       </div>
 
@@ -384,9 +511,16 @@ export const EvaluationExecutionPage: React.FC = () => {
                 ) : null}
               </div>
               <div className="space-y-0.5">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
-                  PAR COMPARATIVO #{idx + 1}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 font-mono">
+                    PAR COMPARATIVO #{idx + 1}
+                  </p>
+                  {comp.comparisonType === 'UPGRADE' && (
+                    <span className="text-[8px] font-mono font-bold bg-amber-100 text-amber-900 border border-amber-300 px-1 rounded uppercase">
+                      Upgrade
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs font-black text-slate-900">
                   <span className="text-libus-magenta">{comp.libusProduct?.name}</span>
                   <span className="text-slate-400 mx-1.5 font-normal">x</span>
@@ -404,19 +538,6 @@ export const EvaluationExecutionPage: React.FC = () => {
                       title={`Consultar CA ${comp.libusProduct.caNumber} da Libus`}
                     >
                       <span>CA Libus: {comp.libusProduct.caNumber}</span>
-                      <ExternalLink size={8} />
-                    </a>
-                  )}
-                  {comp.competitorProduct?.caNumber && (
-                    <a
-                      href={getCaConsultUrl(comp.competitorProduct.caNumber)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="text-[9px] font-mono px-1 py-0.2 rounded bg-slate-100 text-slate-700 font-bold border border-slate-200 hover:underline inline-flex items-center gap-0.5"
-                      title={`Consultar CA ${comp.competitorProduct.caNumber} do Concorrente`}
-                    >
-                      <span>CA Conc.: {comp.competitorProduct.caNumber}</span>
                       <ExternalLink size={8} />
                     </a>
                   )}
@@ -504,7 +625,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-100/80 text-slate-700 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 font-mono">
                   <tr>
-                    <th className="px-6 py-4 w-5/12">Critério Técnico / Requisito Normativo</th>
+                    <th className="px-6 py-4 w-5/12">Critério de Performance de Campo</th>
                     <th className="px-6 py-4 text-center bg-pink-50/50 text-libus-magenta border-l border-r border-slate-200 font-black">
                       <div className="flex flex-col items-center gap-1">
                         <span>Libus ({activeComparison?.libusProduct?.name})</span>
@@ -525,18 +646,6 @@ export const EvaluationExecutionPage: React.FC = () => {
                     <th className="px-6 py-4 text-center bg-slate-50 text-slate-800 border-r border-slate-200 font-black">
                       <div className="flex flex-col items-center gap-1">
                         <span>Concorrente ({activeComparison?.competitorProduct?.name})</span>
-                        {activeComparison?.competitorProduct?.caNumber && (
-                          <a
-                            href={getCaConsultUrl(activeComparison.competitorProduct.caNumber)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-white text-slate-700 font-bold border border-slate-200 hover:bg-slate-100 hover:underline inline-flex items-center gap-0.5"
-                            title={`Consultar Certificado de Aprovação CA ${activeComparison.competitorProduct.caNumber} no Ministério do Trabalho`}
-                          >
-                            <span>CA: {activeComparison.competitorProduct.caNumber}</span>
-                            <ExternalLink size={8} />
-                          </a>
-                        )}
                       </div>
                     </th>
                     <th className="px-6 py-4 text-center">Veredito / N/A</th>
@@ -893,18 +1002,6 @@ export const EvaluationExecutionPage: React.FC = () => {
                     <h4 className="text-sm font-black text-slate-900">
                       {activeComparison?.competitorProduct?.name}
                     </h4>
-                    {activeComparison?.competitorProduct?.caNumber && (
-                      <a
-                        href={getCaConsultUrl(activeComparison.competitorProduct.caNumber)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[9px] font-mono px-1.5 py-0.2 mt-1 rounded bg-slate-200 text-slate-700 font-bold border border-slate-300 hover:bg-slate-300 transition inline-flex items-center gap-0.5"
-                        title={`Consultar Certificado de Aprovação CA ${activeComparison.competitorProduct.caNumber} no Ministério do Trabalho`}
-                      >
-                        <span>CA: {activeComparison.competitorProduct.caNumber}</span>
-                        <ExternalLink size={8} className="opacity-70" />
-                      </a>
-                    )}
                   </div>
                 </div>
                 <span className="text-[10px] text-slate-500 font-mono px-2 py-0.5 rounded bg-slate-200 font-bold">
@@ -943,6 +1040,74 @@ export const EvaluationExecutionPage: React.FC = () => {
                     }
                   })}
                   className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-800 focus:ring-2 focus:ring-libus-lightBlue"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Impacto operacional das trocas e do descarte */}
+          <div className="p-5 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-2.5 gap-2">
+              <div className="flex items-start gap-2">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1"></span>
+                <div>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono">
+                    Impacto de Trocas e Descarte (Opcional)
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Use somente se o cliente souber esses valores. Caso contrário, deixe os campos em 0.
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded font-bold flex-shrink-0">
+                CÁLCULO ANUAL
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 font-mono">
+                  Custo aproximado de cada troca (R$)
+                </label>
+                <span className="text-[11px] text-slate-500 block mb-2">
+                  Exemplo: tempo do almoxarifado, entrega do novo EPI e descarte. Se não souber, deixe 0.
+                </span>
+                <input
+                  type="number"
+                  step="0.10"
+                  placeholder="Ex: 2.50"
+                  value={economicInputs[activeComparison?.id]?.disposalCostPerUnit ?? 0}
+                  onChange={(e) => setEconomicInputs({
+                    ...economicInputs,
+                    [activeComparison?.id]: {
+                      ...economicInputs[activeComparison?.id],
+                      disposalCostPerUnit: Number(e.target.value)
+                    }
+                  })}
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500/30"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1 font-mono">
+                  Peso de uma unidade (gramas)
+                </label>
+                <span className="text-[11px] text-slate-500 block mb-2">
+                  Usado para estimar o peso do resíduo evitado. Se não souber, deixe 0.
+                </span>
+                <input
+                  type="number"
+                  step="5"
+                  placeholder="Ex: 85"
+                  value={economicInputs[activeComparison?.id]?.productWeightGrams ?? 0}
+                  onChange={(e) => setEconomicInputs({
+                    ...economicInputs,
+                    [activeComparison?.id]: {
+                      ...economicInputs[activeComparison?.id],
+                      productWeightGrams: Number(e.target.value)
+                    }
+                  })}
+                  className="w-full px-4 py-2 bg-white border border-slate-300 rounded-xl text-sm font-mono font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500/30"
                 />
               </div>
             </div>
@@ -1067,7 +1232,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                 </div>
 
                 <div className="p-5 rounded-xl bg-slate-50 border border-slate-200 flex flex-col justify-between">
-                  <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider font-mono">Economia Anual Gerada</span>
+                  <span className="text-[10px] text-emerald-700 font-bold uppercase tracking-wider font-mono">Economia na Compra</span>
                   <p className="text-2xl font-black text-emerald-600 mt-2 font-mono">
                     R$ {economicResult.economyGenerated.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </p>
@@ -1075,37 +1240,78 @@ export const EvaluationExecutionPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Termo de Homologação e Assinaturas */}
-              <div className="bg-white p-8 rounded-2xl border border-slate-200/90 shadow-xs space-y-6">
-                <div className="border-b border-slate-200 pb-3">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 font-mono">
-                    Termo de Homologação & Validação Técnica de Campo
-                  </h4>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    Declaro que a avaliação acima reflete a pontuação e os testes de uso dos colaboradores nas atividades operacionais.
-                  </p>
+              {/* Resumo das trocas e do descarte */}
+              <div className="p-6 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-emerald-200/80 pb-3 gap-2">
+                  <div className="flex items-start gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600 mt-0.5"></span>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider text-emerald-950 font-mono">
+                        Resumo de Trocas e Descarte
+                      </h4>
+                      <p className="text-[11px] text-emerald-800/80 mt-1">
+                        Estimativa anual baseada na vida útil e nos valores informados.
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold px-2.5 py-0.5 rounded bg-emerald-600 text-white shadow-xs self-start sm:self-auto">
+                    RESULTADO ANUAL
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                  <div className="border-t-2 border-slate-300 pt-3 text-center space-y-1">
-                    <p className="text-xs font-bold text-slate-900">{evaluation.leadTechnician?.name}</p>
-                    <p className="text-[11px] text-slate-500 uppercase font-mono">Libus do Brasil • Divisão Técnica</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-slate-800">
+                  <div className="p-4 rounded-xl bg-white border border-emerald-200 flex flex-col justify-between">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-mono">Trocas evitadas por ano</span>
+                    <p className="text-2xl font-black text-emerald-800 mt-1 font-mono">
+                      -{Math.max(0, (economicResult.unitsDiscardedCurrent || 0) - (economicResult.unitsDiscardedLibus || 0))} peças
+                    </p>
+                    <span className="text-[10px] text-slate-500 mt-1">
+                      De {economicResult.unitsDiscardedCurrent || 0} para {economicResult.unitsDiscardedLibus || 0} trocas anuais
+                    </span>
                   </div>
 
-                  <div className="border-t-2 border-slate-300 pt-3 text-center space-y-1">
-                    <p className="text-xs font-bold text-slate-900">
-                      {evaluation.participants?.[0]?.name || 'Responsável Técnico / SESMT'}
+                  <div className="p-4 rounded-xl bg-white border border-emerald-200 flex flex-col justify-between">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-mono">Resíduo evitado</span>
+                    <p className="text-2xl font-black text-emerald-800 mt-1 font-mono">
+                      -{economicResult.wasteKgReduced || 0} kg
                     </p>
-                    <p className="text-[11px] text-slate-500 uppercase font-mono">
-                      {evaluation.company?.tradeName} • Cliente
+                    <span className="text-[10px] text-slate-500 mt-1">Massa de polímero retirada do descarte</span>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-white border border-emerald-200 flex flex-col justify-between">
+                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider font-mono">Economia Total (TCO + Descarte)</span>
+                    <p className="text-2xl font-black text-emerald-700 mt-1 font-mono">
+                      R$ {(economicResult.totalAnnualSavings || economicResult.economyGenerated).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                     </p>
+                    <span className="text-[10px] text-slate-500 mt-1">
+                      Inclui +R$ {(economicResult.disposalCostSavings || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em taxa/almoxarifado
+                    </span>
                   </div>
                 </div>
               </div>
+
             </div>
           )}
         </div>
       )}
+
+      {/* Modal de Homologação com Assinatura Digital na Tela & Termo NR-6 */}
+      <HomologationSignatureModal
+        isOpen={showCompleteModal}
+        onClose={() => setShowCompleteModal(false)}
+        evaluationId={evaluation.id}
+        companyName={evaluation.company?.tradeName || 'Cliente'}
+        defaultTechnicianName={evaluation.leadTechnician?.name || ''}
+        participants={evaluation.participants || []}
+        onSuccess={(updatedEval) => {
+          setEvaluation({
+            ...evaluation,
+            ...updatedEval,
+            status: 'COMPLETED'
+          });
+          alert('Laudo técnico assinado e homologado com sucesso!');
+        }}
+      />
 
       {/* Modal de Confirmação de Exclusão */}
       {showDeleteModal && (
@@ -1145,6 +1351,144 @@ export const EvaluationExecutionPage: React.FC = () => {
               >
                 <Trash2 size={13} />
                 <span>{deleting ? 'Excluindo...' : 'Sim, Excluir Laudo'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Gerenciamento de Participantes / Equipe Técnica */}
+      {showParticipantsModal && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-pink-50 border border-pink-200 flex items-center justify-center flex-shrink-0 text-libus-magenta">
+                  <Users size={20} />
+                </div>
+                <div>
+                  <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-libus-magenta">
+                    EQUIPE DE TESTE & SESMT
+                  </span>
+                  <h3 className="text-base font-black text-slate-900">
+                    Gerenciar Participantes do Laudo
+                  </h3>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowParticipantsModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Cadastre ou atualize os operadores, técnicos de segurança ou membros do SESMT da empresa <strong>{evaluation.company?.tradeName}</strong> que participaram dos testes práticos de campo.
+            </p>
+
+            <div className="space-y-3 pt-2">
+              {modalParticipants.map((p, index) => (
+                <div key={index} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold font-mono text-slate-600 uppercase">
+                      Participante #{index + 1}
+                    </span>
+                    {modalParticipants.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveParticipantRow(index)}
+                        className="text-xs text-rose-600 hover:text-rose-800 font-bold flex items-center gap-1 transition"
+                      >
+                        <Trash2 size={12} /> Remover
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Nome Completo *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: João Silva"
+                        value={p.name}
+                        onChange={(e) => handleUpdateParticipantField(index, 'name', e.target.value)}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 mb-1">
+                        Área / Cargo / Função *
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Operador de Caldeira, TST, Compras"
+                        value={p.roleOrArea}
+                        onChange={(e) => handleUpdateParticipantField(index, 'roleOrArea', e.target.value)}
+                        className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-semibold text-slate-900 focus:ring-2 focus:ring-pink-400 focus:border-pink-400"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-1">
+                    <div>
+                      <label className="block text-[10px] font-medium text-slate-500 mb-0.5">
+                        E-mail (Opcional)
+                      </label>
+                      <input
+                        type="email"
+                        placeholder="colaborador@empresa.com.br"
+                        value={p.email || ''}
+                        onChange={(e) => handleUpdateParticipantField(index, 'email', e.target.value)}
+                        className="w-full px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:ring-2 focus:ring-pink-400"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-medium text-slate-500 mb-0.5">
+                        Telefone / Ramal (Opcional)
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="(11) 99999-9999"
+                        value={p.phone || ''}
+                        onChange={(e) => handleUpdateParticipantField(index, 'phone', e.target.value)}
+                        className="w-full px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs text-slate-700 focus:ring-2 focus:ring-pink-400"
+                      />
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <button
+                type="button"
+                onClick={handleAddParticipantRow}
+                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold font-mono rounded-xl border border-dashed border-slate-300 transition flex items-center justify-center gap-1.5"
+              >
+                <Plus size={14} /> Adicionar Mais um Participante
+              </button>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setShowParticipantsModal(false)}
+                disabled={savingParticipants}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveParticipants}
+                disabled={savingParticipants}
+                className="px-5 py-2.5 bg-gradient-to-r from-libus-magenta to-libus-magentaHover hover:brightness-105 text-white text-xs font-bold rounded-xl shadow-md transition font-mono uppercase tracking-wider flex items-center gap-2"
+              >
+                <Save size={14} />
+                <span>{savingParticipants ? 'Salvando...' : 'Salvar Equipe'}</span>
               </button>
             </div>
           </div>

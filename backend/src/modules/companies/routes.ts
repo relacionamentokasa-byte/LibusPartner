@@ -137,7 +137,7 @@ companiesRouter.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-companiesRouter.delete('/:id', roleMiddleware(['ADMIN', 'GESTOR']), async (req: Request, res: Response) => {
+companiesRouter.delete('/:id', roleMiddleware(['ADMIN']), async (req: Request, res: Response) => {
   try {
     const user = req.user!;
     const { id } = req.params;

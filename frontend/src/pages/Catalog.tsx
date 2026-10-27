@@ -201,8 +201,7 @@ export const CatalogPage: React.FC = () => {
     const matchesCompetitor = prod.equivalences?.some(
       (eq) =>
         eq.competitorProduct?.name.toLowerCase().includes(searchLower) ||
-        eq.competitorProduct?.manufacturer?.name.toLowerCase().includes(searchLower) ||
-        (eq.competitorProduct?.caNumber && eq.competitorProduct.caNumber.toLowerCase().includes(searchLower))
+        eq.competitorProduct?.manufacturer?.name.toLowerCase().includes(searchLower)
     );
 
     return matchesFamily && matchesCategory && (matchesLibus || matchesCompetitor);
@@ -438,7 +437,7 @@ export const CatalogPage: React.FC = () => {
                   <div className="min-w-0 flex-1">
                     {(() => {
                       const spec = getProductSpec(prod.name);
-                      const caNum = prod.caNumber || spec?.caNumber;
+                      const caNum = prod.caNumber;
                       const intCode = prod.internalCode || spec?.internalCode;
 
                       return (
@@ -546,19 +545,6 @@ export const CatalogPage: React.FC = () => {
                               <span className="font-bold text-slate-800 text-[11px] truncate max-w-[120px] sm:max-w-[160px]" title={eq.competitorProduct?.name}>
                                 {eq.competitorProduct?.name}
                               </span>
-                              {eq.competitorProduct?.caNumber && (
-                                <a
-                                  href={getCaConsultUrl(eq.competitorProduct.caNumber)}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  className="text-[8px] px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 font-semibold flex-shrink-0 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5"
-                                  title={`Consultar CA ${eq.competitorProduct.caNumber} no Ministério do Trabalho`}
-                                >
-                                  <span>CA {eq.competitorProduct.caNumber}</span>
-                                  <ExternalLink size={7} className="opacity-70" />
-                                </a>
-                              )}
                             </div>
                           </div>
                         );
@@ -641,7 +627,7 @@ export const CatalogPage: React.FC = () => {
 
                     {(() => {
                       const spec = getProductSpec(prod.name);
-                      const caNum = prod.caNumber || spec?.caNumber;
+                      const caNum = prod.caNumber;
                       const intCode = prod.internalCode || spec?.internalCode;
 
                       return (
@@ -774,19 +760,6 @@ export const CatalogPage: React.FC = () => {
                                   </div>
                                 </div>
 
-                                {eq.competitorProduct?.caNumber && (
-                                  <a
-                                    href={getCaConsultUrl(eq.competitorProduct.caNumber)}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="text-[8px] font-mono px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 flex-shrink-0 ml-1 hover:bg-emerald-50 hover:text-emerald-700 hover:border-emerald-300 transition inline-flex items-center gap-0.5 font-semibold"
-                                    title={`Consultar CA ${eq.competitorProduct.caNumber} no Ministério do Trabalho`}
-                                  >
-                                    <span>CA {eq.competitorProduct.caNumber}</span>
-                                    <ExternalLink size={7} className="opacity-70" />
-                                  </a>
-                                )}
                               </div>
                             );
                           })}
@@ -981,7 +954,7 @@ export const CatalogPage: React.FC = () => {
                 <div className="flex items-center gap-2 pt-1 flex-wrap font-mono text-xs">
                   {(() => {
                     const spec = getProductSpec(selectedProductDetails.name);
-                    const caNum = selectedProductDetails.caNumber || spec?.caNumber;
+                    const caNum = selectedProductDetails.caNumber;
                     const intCode = selectedProductDetails.internalCode || spec?.internalCode;
 
                     return (
@@ -1027,7 +1000,8 @@ export const CatalogPage: React.FC = () => {
                 'Matéria-prima de alta performance com resistência a impactos e agentes químicos.',
                 'Compatibilidade com sistemas e acoplamentos Libus para proteção combinada.'
               ];
-              const standards = spec?.standards || ['Portaria MTE / NR-6', 'Normas ABNT NBR Vigentes'];
+              const standards = (spec?.standards || ['Portaria MTE / NR-6', 'Normas ABNT NBR Vigentes'])
+                .filter((standard) => !/\bC\.?A\.?\s*\d+/i.test(standard));
               const applications = spec?.applications || ['Indústria em geral', 'Construção civil', 'Manutenção industrial'];
               const packaging = spec?.packaging || 'Embalagem individual homologada';
 
@@ -1153,11 +1127,6 @@ export const CatalogPage: React.FC = () => {
                                     <img src={logo} alt={manuf} className="h-2.5 max-w-[40px] object-contain" />
                                   ) : (
                                     <span className="text-[9px] font-mono font-bold text-slate-500 uppercase">{manuf}</span>
-                                  )}
-                                  {eq.competitorProduct?.caNumber && (
-                                    <span className="text-[8px] font-mono px-1 py-0.2 bg-white rounded border border-slate-200 text-slate-600 font-bold">
-                                      CA {eq.competitorProduct.caNumber}
-                                    </span>
                                   )}
                                 </div>
                                 <p className="text-xs font-bold text-slate-800 truncate" title={eq.competitorProduct?.name}>
