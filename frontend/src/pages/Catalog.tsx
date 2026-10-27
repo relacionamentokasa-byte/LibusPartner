@@ -179,6 +179,13 @@ export const CatalogPage: React.FC = () => {
     }
   };
 
+  // Ordenar famílias colocando Proteção Respiratória (BLS) em primeiro lugar de destaque
+  const sortedFamilies = [...families].sort((a, b) => {
+    if (a.slug === 'respiratoria') return -1;
+    if (b.slug === 'respiratoria') return 1;
+    return a.name.localeCompare(b.name);
+  });
+
   const availableCategories = Array.from(
     new Map(
       products
@@ -269,9 +276,10 @@ export const CatalogPage: React.FC = () => {
                 {products.length}
               </span>
             </button>
-            {families.map((fam) => {
+            {sortedFamilies.map((fam) => {
               const countInFam = products.filter(p => p.category?.family?.slug === fam.slug).length;
               const isSelected = selectedFamily === fam.slug;
+              const isBLS = fam.slug === 'respiratoria';
               return (
                 <button
                   key={fam.id}
@@ -282,11 +290,22 @@ export const CatalogPage: React.FC = () => {
                   className={`px-3.5 py-2 rounded-xl text-xs font-bold transition flex-shrink-0 font-mono uppercase tracking-wider flex items-center gap-1.5 active:scale-95 ${
                     isSelected
                       ? 'bg-libus-magenta text-white shadow-md ring-2 ring-pink-500/30'
+                      : isBLS
+                      ? 'bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
                   }`}
                 >
+                  {isBLS && (
+                    <span className="w-1.5 h-1.5 rounded-full bg-libus-magenta animate-pulse"></span>
+                  )}
                   <span>{fam.name}</span>
-                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${isSelected ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'}`}>
+                  <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${
+                    isSelected
+                      ? 'bg-white/20 text-white'
+                      : isBLS
+                      ? 'bg-pink-200 text-pink-800 font-bold'
+                      : 'bg-slate-200 text-slate-600'
+                  }`}>
                     {countInFam}
                   </span>
                 </button>
