@@ -930,6 +930,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-300 mb-1.5 font-mono">Preço Unitário Proposto (R$)</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   value={economicInputs[activeComparison?.id]?.libusPrice ?? 0}
                   onChange={(e) => setEconomicInputs({
@@ -947,6 +948,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-300 mb-1.5 font-mono">Vida Útil Estimada Libus (Meses)</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   value={economicInputs[activeComparison?.id]?.lifespanLibus ?? 0}
                   onChange={(e) => setEconomicInputs({
@@ -1013,6 +1015,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Preço Unitário Atual (R$)</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.01"
                   value={economicInputs[activeComparison?.id]?.currentPrice ?? 0}
                   onChange={(e) => setEconomicInputs({
@@ -1030,6 +1033,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                 <label className="block text-xs font-bold text-slate-700 mb-1.5">Vida Útil Média (Meses no Posto)</label>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.1"
                   value={economicInputs[activeComparison?.id]?.lifespanCurrent ?? 0}
                   onChange={(e) => setEconomicInputs({
@@ -1074,6 +1078,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                 </span>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="0.10"
                   placeholder="Ex: 2.50"
                   value={economicInputs[activeComparison?.id]?.disposalCostPerUnit ?? 0}
@@ -1097,6 +1102,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                 </span>
                 <input
                   type="number"
+                  inputMode="decimal"
                   step="5"
                   placeholder="Ex: 85"
                   value={economicInputs[activeComparison?.id]?.productWeightGrams ?? 0}
@@ -1118,6 +1124,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               <label className="block text-xs font-bold text-slate-700 mb-1.5 font-mono">Quantidade de Postos / Usuários</label>
               <input
                 type="number"
+                inputMode="numeric"
                 value={economicInputs[activeComparison?.id]?.quantity ?? 1}
                 onChange={(e) => setEconomicInputs({
                   ...economicInputs,
