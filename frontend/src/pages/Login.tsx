@@ -8,8 +8,8 @@ import { Lock, Mail, ArrowRight, KeyRound, X, CheckCircle2, AlertTriangle } from
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState('tecnico@libus.com.br');
-  const [password, setPassword] = useState('libus123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
