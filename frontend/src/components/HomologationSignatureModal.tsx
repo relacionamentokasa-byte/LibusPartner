@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, X, ShieldCheck, PenTool, ArrowRight, UserCheck, AlertTriangle } from 'lucide-react';
 import { SignaturePad } from './SignaturePad';
+import { apiRequest } from '../services/api';
 
 interface Participant {
   id?: string;
@@ -72,13 +73,8 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
 
     try {
       setLoading(true);
-      const token = localStorage.getItem('libus_token');
-      const res = await fetch(`/api/evaluations/${evaluationId}/sign-and-complete`, {
+      const data = await apiRequest(`/evaluations/${evaluationId}/sign-and-complete`, {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify({
           technicianSignerName: technicianName,
           technicianSignature,
@@ -90,11 +86,6 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
           clientSignature
         })
       });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Erro ao salvar homologação e assinaturas');
-      }
 
       onSuccess(data.evaluation);
       onClose();
