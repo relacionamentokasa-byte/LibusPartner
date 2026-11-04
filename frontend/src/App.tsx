@@ -15,6 +15,7 @@ import { AuditLogsPage } from './pages/AuditLogs';
 import { ProfilePage } from './pages/Profile';
 import { ResetPasswordPage } from './pages/ResetPassword';
 import { ForceChangePasswordPage } from './pages/ForceChangePassword';
+import { LanguageProvider } from './context/LanguageContext';
 
 // Alves Planejados sub-system
 import { AlvesAuthProvider } from './context/AlvesAuthContext';
@@ -81,10 +82,11 @@ const ForcePasswordRoute: React.FC = () => {
 
 export function App() {
   return (
-    <AuthProvider>
-      <AlvesAuthProvider>
-        <BrowserRouter>
-          <Routes>
+    <LanguageProvider>
+      <AuthProvider>
+        <AlvesAuthProvider>
+          <BrowserRouter>
+            <Routes>
             {/* Libus Partner - Autenticação & Recuperação */}
             <Route path="/login" element={<LoginPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
@@ -188,7 +190,8 @@ export function App() {
         </BrowserRouter>
       </AlvesAuthProvider>
     </AuthProvider>
-  );
+  </LanguageProvider>
+);
 }
 
 export default App;

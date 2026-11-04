@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
+import { LanguageSelector } from './LanguageSelector';
 import { LibusLogo } from './LibusLogo';
 import { apiRequest } from '../services/api';
 import {
@@ -23,6 +25,7 @@ import {
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -36,15 +39,15 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const isManagerOrAdmin = user?.role === 'ADMIN' || user?.role === 'GESTOR';
 
   const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Nova Avaliação', href: '/evaluations/new', icon: Plus, isPrimaryAction: true },
-    { name: 'Histórico & Laudos', href: '/evaluations', icon: ClipboardCheck },
-    { name: 'Catálogo De-Para', href: '/catalog', icon: Layers },
-    { name: 'Empresas & Unidades', href: '/companies', icon: Building2 },
+    { name: t.navDashboard, href: '/', icon: LayoutDashboard },
+    { name: t.navNewEvaluation, href: '/evaluations/new', icon: Plus, isPrimaryAction: true },
+    { name: t.navEvaluations, href: '/evaluations', icon: ClipboardCheck },
+    { name: t.navCatalog, href: '/catalog', icon: Layers },
+    { name: t.navCompanies, href: '/companies', icon: Building2 },
     ...(isManagerOrAdmin
-      ? [{ name: 'Equipe & Gestão', href: '/users', icon: Users }]
+      ? [{ name: t.navUsers, href: '/users', icon: Users }]
       : []),
-    { name: 'Meu Perfil', href: '/profile', icon: UserCheck },
+    { name: t.navProfile, href: '/profile', icon: UserCheck },
   ];
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
@@ -247,6 +250,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Seletor de Idioma (PT-BR / ES) */}
+            <LanguageSelector compact={true} />
+
             {user && (
               <div className="flex items-center gap-2 md:hidden">
                 <div className="w-7 h-7 rounded-lg bg-libus-charcoal text-white flex items-center justify-center text-[11px] font-black font-mono border border-slate-700">
@@ -272,7 +278,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           }`}
         >
           <LayoutDashboard size={18} />
-          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Início</span>
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">{t.navDashboard}</span>
         </Link>
 
         <Link
@@ -282,7 +288,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           }`}
         >
           <ClipboardCheck size={18} />
-          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Laudos</span>
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">{t.navEvaluations}</span>
         </Link>
 
         {/* Floating Action Button (Nova Avaliação) */}
@@ -293,7 +299,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-libus-magenta to-pink-500 text-white flex items-center justify-center shadow-lg shadow-pink-500/40 border-2 border-[#0F141F] group-active:scale-95 transition">
             <Plus size={22} className="stroke-[2.5]" />
           </div>
-          <span className="text-[9px] font-bold tracking-tight text-pink-400 mt-1 uppercase font-mono">Novo</span>
+          <span className="text-[9px] font-bold tracking-tight text-pink-400 mt-1 uppercase font-mono">{t.actions === 'Acciones' ? 'Nuevo' : 'Novo'}</span>
         </Link>
 
         <Link
@@ -303,7 +309,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           }`}
         >
           <Layers size={18} />
-          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Catálogo</span>
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">{t.navCatalog}</span>
         </Link>
 
         <button
@@ -311,7 +317,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           className="flex flex-col items-center justify-center py-1 px-2.5 rounded-xl text-slate-400 hover:text-white transition"
         >
           <Menu size={18} />
-          <span className="text-[10px] tracking-tight mt-0.5 font-medium">Menu</span>
+          <span className="text-[10px] tracking-tight mt-0.5 font-medium">{t.navMenu}</span>
         </button>
       </nav>
 

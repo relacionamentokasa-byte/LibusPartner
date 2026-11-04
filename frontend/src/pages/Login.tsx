@@ -3,10 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../services/api';
 import { LibusLogo } from '../components/LibusLogo';
-import { Lock, Mail, ArrowRight, KeyRound, X, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { Lock, Mail, ArrowRight, KeyRound, X, CheckCircle2, AlertTriangle, Globe } from 'lucide-react';
+import { useLanguage } from '../context/LanguageContext';
+import { LanguageSelector } from '../components/LanguageSelector';
 
 export const LoginPage: React.FC = () => {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -62,11 +65,16 @@ export const LoginPage: React.FC = () => {
       <div className="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden border border-white/10 animate-in fade-in zoom-in-95 duration-200">
         {/* Header Oficial Libus */}
         <div className="bg-gradient-to-b from-[#0F141F] to-[#1A2130] p-8 text-center text-white relative border-b border-white/10 flex flex-col items-center">
+          {/* Seletor de Idioma (PT / ES) no topo direito */}
+          <div className="absolute top-4 right-4">
+            <LanguageSelector compact={true} />
+          </div>
+
           <div className="py-2">
             <LibusLogo className="h-9 w-auto" textColor="#FFFFFF" badgeText="PARTNER" />
           </div>
           <p className="text-xs text-slate-400 mt-2 font-medium tracking-wide">
-            Plataforma de Engenharia & Homologações Técnicas
+            {t.loginTitle}
           </p>
         </div>
 
@@ -82,7 +90,7 @@ export const LoginPage: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 font-mono">
-                E-mail Corporativo
+                {t.loginEmailLabel}
               </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-3 text-slate-400" size={16} />
@@ -100,7 +108,7 @@ export const LoginPage: React.FC = () => {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider font-mono">
-                  Senha de Acesso
+                  {t.loginPasswordLabel}
                 </label>
                 <button
                   type="button"
@@ -112,7 +120,7 @@ export const LoginPage: React.FC = () => {
                   }}
                   className="text-[11px] text-pink-600 hover:text-pink-700 font-mono font-bold hover:underline transition cursor-pointer"
                 >
-                  Esqueceu sua senha?
+                  {t.loginForgotLink}
                 </button>
               </div>
               <div className="relative">
@@ -133,7 +141,7 @@ export const LoginPage: React.FC = () => {
               disabled={loading}
               className="w-full py-3.5 bg-gradient-to-r from-libus-magenta to-libus-magentaHover hover:brightness-105 text-white font-bold rounded-xl shadow-lg hover:shadow-pink-500/25 transition flex items-center justify-center gap-2 font-mono uppercase tracking-wider text-xs group disabled:opacity-50 mt-6 active:scale-98 cursor-pointer"
             >
-              <span>{loading ? 'Autenticando...' : 'Acessar Plataforma'}</span>
+              <span>{loading ? t.loginAuthenticating : t.loginButton}</span>
               <ArrowRight size={15} className="group-hover:translate-x-1 transition" />
             </button>
           </form>
