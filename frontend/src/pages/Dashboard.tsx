@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   ClipboardCheck,
   Building2,
@@ -21,6 +22,7 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -126,14 +128,14 @@ export const DashboardPage: React.FC = () => {
                 {user?.role || 'TÉCNICO'}
               </span>
               <span className="text-slate-400 text-[10px] sm:text-xs font-mono">
-                ENGENHARIA DE APLICAÇÃO & HOMOLOGAÇÃO
+                {t.dashBadgeTitle}
               </span>
             </div>
             <h1 className="text-lg sm:text-2xl md:text-3xl font-black tracking-tight text-white leading-tight">
-              Painel de Testes & Laudos
+              {t.dashTitle}
             </h1>
             <p className="text-slate-300 text-[11px] sm:text-xs md:text-sm max-w-2xl leading-relaxed hidden sm:block">
-              Gestão de ensaios comparativos de EPIs, validação de C.A. e testes práticos de aceitação com colaboradores no posto de trabalho.
+              {t.dashSubtitle}
             </p>
           </div>
 
@@ -142,7 +144,7 @@ export const DashboardPage: React.FC = () => {
             className="inline-flex items-center justify-center gap-2 bg-libus-magenta hover:bg-libus-magentaHover text-white font-bold px-4 py-2.5 sm:px-5 sm:py-3 rounded-xl shadow-md transition transform active:scale-95 flex-shrink-0 text-xs tracking-wider uppercase font-mono w-full sm:w-auto"
           >
             <Plus size={15} />
-            <span>Novo Teste de Campo</span>
+            <span>{t.dashNewTestBtn}</span>
           </Link>
         </div>
       </div>
@@ -152,38 +154,38 @@ export const DashboardPage: React.FC = () => {
         {/* Testes de Campo */}
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Testes de Campo</span>
-            <span className="text-[9px] sm:text-[10px] font-mono text-slate-400 hidden sm:inline">VOLUME</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">{t.dashStatTestsTitle}</span>
+            <span className="text-[9px] sm:text-[10px] font-mono text-slate-400 hidden sm:inline">{t.dashStatTestsBadge}</span>
           </div>
           <div className="my-1 sm:my-2 flex items-baseline gap-1.5 sm:gap-2">
             <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono">{totalEvaluations}</p>
-            <span className="text-[10px] sm:text-xs text-slate-500 font-medium">laudos</span>
+            <span className="text-[10px] sm:text-xs text-slate-500 font-medium">{t.dashStatTestsUnit}</span>
           </div>
           <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
-            {inProgressEvaluations} em andamento
+            {inProgressEvaluations} {t.dashStatTestsSub}
           </p>
         </div>
 
         {/* Empresas em Homologação */}
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Empresas</span>
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 hidden sm:inline">CLIENTES</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">{t.dashStatCompaniesTitle}</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 hidden sm:inline">{t.dashStatCompaniesBadge}</span>
           </div>
           <div className="my-1 sm:my-2 flex items-baseline gap-1.5 sm:gap-2">
             <p className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight font-mono">{uniqueCompanies.size}</p>
-            <span className="text-[10px] sm:text-xs text-slate-500 font-medium">indústrias</span>
+            <span className="text-[10px] sm:text-xs text-slate-500 font-medium">{t.dashStatCompaniesUnit}</span>
           </div>
           <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
-            {completedEvaluations} laudos emitidos
+            {completedEvaluations} {t.dashStatCompaniesSub}
           </p>
         </div>
 
         {/* Avaliação Média dos Usuários (TAU) */}
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Aceitação TAU</span>
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-emerald-600 hidden sm:inline">SESMT</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">{t.dashStatTauTitle}</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-emerald-600 hidden sm:inline">{t.dashStatTauBadge}</span>
           </div>
           <div className="my-1 sm:my-2 flex items-baseline gap-1 sm:gap-1.5">
             <p className="text-xl sm:text-3xl font-black text-emerald-600 tracking-tight font-mono">
@@ -192,15 +194,15 @@ export const DashboardPage: React.FC = () => {
             <span className="text-[10px] sm:text-xs text-slate-400 font-mono font-bold">/ 10</span>
           </div>
           <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
-            Conforto & durabilidade
+            {t.dashStatTauSub}
           </p>
         </div>
 
         {/* Principais Concorrentes Avaliados */}
         <div className="bg-white p-3.5 sm:p-5 rounded-2xl border border-slate-200/90 shadow-2xs flex flex-col justify-between">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">Concorrentes</span>
-            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 hidden sm:inline">DE-PARA</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold uppercase tracking-wider text-slate-600 truncate">{t.dashStatCompetitorsTitle}</span>
+            <span className="text-[9px] sm:text-[10px] font-mono font-bold text-slate-500 hidden sm:inline">{t.dashStatCompetitorsBadge}</span>
           </div>
           <div className="my-1 sm:my-2 flex flex-wrap gap-1 items-center">
             {topCompetitors.length > 0 ? (
@@ -210,11 +212,11 @@ export const DashboardPage: React.FC = () => {
                 </span>
               ))
             ) : (
-              <span className="text-[11px] text-slate-400 font-mono">Nenhum</span>
+              <span className="text-[11px] text-slate-400 font-mono">{t.all === 'Todas' ? 'Nenhum' : 'Ninguno'}</span>
             )}
           </div>
           <p className="text-[10px] sm:text-[11px] text-slate-500 border-t border-slate-100 pt-1.5 sm:pt-2 font-medium truncate">
-            Marcas testadas 1x1
+            {t.dashStatCompetitorsSub}
           </p>
         </div>
       </div>
@@ -226,40 +228,40 @@ export const DashboardPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-libus-magenta"></span>
               <h2 className="text-sm font-black uppercase tracking-wider text-slate-800 font-mono">
-                Laudos e Avaliações de Campo
+                {t.dashTableTitle}
               </h2>
             </div>
             <p className="text-xs text-slate-500 mt-0.5">
-              Histórico de homologações e comparativos realizados em clientes
+              {t.dashTableSubtitle}
             </p>
           </div>
           <Link
             to="/evaluations"
             className="text-xs font-bold text-slate-700 hover:text-libus-magenta flex items-center gap-1.5 transition font-mono"
           >
-            <span>Ver Histórico Completo</span>
+            <span>{t.dashTableFullHistory}</span>
             <ArrowRight size={14} />
           </Link>
         </div>
 
         {loading ? (
           <div className="p-12 text-center text-slate-400 text-xs font-mono">
-            Carregando registros da base de dados...
+            {t.loading}
           </div>
         ) : evaluations.length === 0 ? (
           <div className="p-16 text-center">
             <div className="w-16 h-16 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4 border border-slate-200">
               <ClipboardCheck size={28} />
             </div>
-            <p className="text-sm font-bold text-slate-700">Nenhum laudo registrado até o momento.</p>
+            <p className="text-sm font-bold text-slate-700">{t.dashTableEmptyTitle}</p>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              Inicie um novo comparativo técnico para coletar notas com os funcionários do cliente.
+              {t.dashTableEmptyDesc}
             </p>
             <Link
               to="/evaluations/new"
               className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 bg-libus-magenta text-white text-xs font-bold rounded-xl shadow hover:bg-libus-magentaHover transition uppercase tracking-wider font-mono"
             >
-              <Plus size={14} /> Iniciar Primeira Avaliação
+              <Plus size={14} /> {t.dashTableEmptyBtn}
             </Link>
           </div>
         ) : (
@@ -271,17 +273,17 @@ export const DashboardPage: React.FC = () => {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <h4 className="font-bold text-slate-900 text-sm">{ev.company?.tradeName}</h4>
-                      <p className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || 'CNPJ não informado'}</p>
+                      <p className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || (t.all === 'Todas' ? 'CNPJ não informado' : 'ID fiscal no informado')}</p>
                     </div>
                     {ev.status === 'COMPLETED' ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold font-mono border border-emerald-200 flex-shrink-0">
                         <CheckCircle2 size={11} className="text-emerald-600" />
-                        Homologada
+                        {t.dashStatusCompleted}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[10px] font-semibold font-mono border border-slate-200 flex-shrink-0">
                         <Clock size={11} className="text-slate-400" />
-                        Em Campo
+                        {t.dashStatusInProgress}
                       </span>
                     )}
                   </div>
@@ -299,7 +301,7 @@ export const DashboardPage: React.FC = () => {
                   )}
 
                   <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-mono">
-                    <span>{new Date(ev.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <span>{new Date(ev.createdAt).toLocaleDateString(t.all === 'Todas' ? 'pt-BR' : 'es-AR')}</span>
                     <div className="flex items-center gap-2">
                       <Link
                         to={`/evaluations/${ev.id}/report`}
@@ -312,7 +314,7 @@ export const DashboardPage: React.FC = () => {
                         to={`/evaluations/${ev.id}`}
                         className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-800 hover:text-white rounded-lg text-xs font-bold text-slate-700 transition border border-slate-200 font-mono"
                       >
-                        <span>Abrir</span>
+                        <span>{t.open}</span>
                         <ChevronRight size={13} />
                       </Link>
                       {(user?.role === 'ADMIN' || user?.role === 'GESTOR' || ev.leadTechnicianId === user?.id) && (
@@ -335,12 +337,12 @@ export const DashboardPage: React.FC = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-100/70 text-slate-600 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 font-mono">
                   <tr>
-                    <th className="px-6 py-3.5">Empresa Cliente</th>
-                    <th className="px-6 py-3.5">Técnico Libus</th>
-                    <th className="px-6 py-3.5">Pares Avaliados (1x1)</th>
-                    <th className="px-6 py-3.5">Status</th>
-                    <th className="px-6 py-3.5">Data Registro</th>
-                    <th className="px-6 py-3.5 text-right">Ação</th>
+                    <th className="px-6 py-3.5">{t.dashColCompany}</th>
+                    <th className="px-6 py-3.5">{t.dashColTech}</th>
+                    <th className="px-6 py-3.5">{t.dashColPairs}</th>
+                    <th className="px-6 py-3.5">{t.dashColStatus}</th>
+                    <th className="px-6 py-3.5">{t.dashColDate}</th>
+                    <th className="px-6 py-3.5 text-right">{t.dashColAction}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">

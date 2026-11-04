@@ -30,10 +30,12 @@ import { getManufacturerLogo } from '../utils/manufacturerLogos';
 import { getCaConsultUrl } from '../utils/caHelper';
 import { ExternalLink } from 'lucide-react';
 import { HomologationSignatureModal } from '../components/HomologationSignatureModal';
+import { useLanguage } from '../context/LanguageContext';
 
 export const EvaluationExecutionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [evaluation, setEvaluation] = useState<any>(null);
   const [activeComparisonIndex, setActiveComparisonIndex] = useState(0);
   const [activeTab, setActiveTab] = useState<'TECNICA' | 'ECONOMICA' | 'RESULTADO'>('TECNICA');
@@ -565,7 +567,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <ShieldCheck size={16} /> <span>1. Avaliação Técnica</span>
+          <ShieldCheck size={16} /> <span>{t.execTabTechnical}</span>
         </button>
 
         <button
@@ -576,7 +578,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <DollarSign size={16} /> <span>2. Análise Econômica</span>
+          <DollarSign size={16} /> <span>{t.execTabEconomic}</span>
         </button>
 
         <button
@@ -587,7 +589,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          <Award size={16} /> <span>3. Laudo Consolidado</span>
+          <Award size={16} /> <span>{t.execTabReport}</span>
         </button>
       </div>
 
@@ -874,11 +876,11 @@ export const EvaluationExecutionPage: React.FC = () => {
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-libus-accent"></span>
               <h3 className="text-sm font-black uppercase tracking-wider text-slate-900">
-                Parâmetros Econômicos & Projeção de Consumo
+                {t.tcoTitle}
               </h3>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Informe os custos reais de aquisição e a durabilidade média observada no ambiente produtivo.
+              {t.tcoSubtitle}
             </p>
           </div>
 
@@ -902,7 +904,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                   )}
                   <div>
                     <span className="text-[10px] text-libus-magenta font-bold font-mono uppercase tracking-widest block">
-                      PROPOSTA LIBUS
+                      {t.tcoLibusProposal}
                     </span>
                     <h4 className="text-sm font-black text-white">
                       {activeComparison?.libusProduct?.name}
@@ -927,7 +929,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 font-mono">Preço Unitário Proposto (R$)</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 font-mono">{t.tcoLibusPrice}</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -945,7 +947,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-300 mb-1.5 font-mono">Vida Útil Estimada Libus (Meses)</label>
+                <label className="block text-xs font-bold text-slate-300 mb-1.5 font-mono">{t.tcoLibusLifespan}</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -1007,12 +1009,12 @@ export const EvaluationExecutionPage: React.FC = () => {
                   </div>
                 </div>
                 <span className="text-[10px] text-slate-500 font-mono px-2 py-0.5 rounded bg-slate-200 font-bold">
-                  PRODUTO ATUAL
+                  {t.tcoCurrentProduct}
                 </span>
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Preço Unitário Atual (R$)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">{t.tcoCompPrice}</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -1030,7 +1032,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Vida Útil Média (Meses no Posto)</label>
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">{t.tcoCompLifespan}</label>
                 <input
                   type="number"
                   inputMode="decimal"
@@ -1056,25 +1058,25 @@ export const EvaluationExecutionPage: React.FC = () => {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 mt-1"></span>
                 <div>
                   <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 font-mono">
-                    Impacto de Trocas e Descarte (Opcional)
+                    {t.tcoDisposalImpactTitle}
                   </h4>
                   <p className="text-[11px] text-slate-500 mt-1">
-                    Use somente se o cliente souber esses valores. Caso contrário, deixe os campos em 0.
+                    {t.tcoDisposalImpactSubtitle}
                   </p>
                 </div>
               </div>
               <span className="text-[10px] font-mono text-emerald-700 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded font-bold flex-shrink-0">
-                CÁLCULO ANUAL
+                {t.tcoAnnualCalculation}
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1 font-mono">
-                  Custo aproximado de cada troca (R$)
+                  {t.tcoDisposalCostUnit}
                 </label>
                 <span className="text-[11px] text-slate-500 block mb-2">
-                  Exemplo: tempo do almoxarifado, entrega do novo EPI e descarte. Se não souber, deixe 0.
+                  {t.tcoDisposalCostUnitHint}
                 </span>
                 <input
                   type="number"
@@ -1095,10 +1097,10 @@ export const EvaluationExecutionPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1 font-mono">
-                  Peso de uma unidade (gramas)
+                  {t.tcoProductWeightGrams}
                 </label>
                 <span className="text-[11px] text-slate-500 block mb-2">
-                  Usado para estimar o peso do resíduo evitado. Se não souber, deixe 0.
+                  {t.tcoProductWeightGramsHint}
                 </span>
                 <input
                   type="number"
@@ -1121,7 +1123,7 @@ export const EvaluationExecutionPage: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-6 border-t border-slate-200 gap-4">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1.5 font-mono">Quantidade de Postos / Usuários</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1.5 font-mono">{t.tcoQuantityUsers}</label>
               <input
                 type="number"
                 inputMode="numeric"
@@ -1142,7 +1144,7 @@ export const EvaluationExecutionPage: React.FC = () => {
               disabled={saving}
               className="px-6 py-3 bg-gradient-to-r from-libus-magenta to-libus-magentaHover hover:brightness-105 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-pink-500/20 flex items-center justify-center gap-2 transition uppercase tracking-wider font-mono"
             >
-              <Save size={14} /> Calcular Projeção Financeira
+              <Save size={14} /> {t.tcoCalculateBtn}
             </button>
           </div>
         </div>

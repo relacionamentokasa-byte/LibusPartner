@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CheckCircle2, X, ShieldCheck, PenTool, ArrowRight, UserCheck, AlertTriangle } from 'lucide-react';
 import { SignaturePad } from './SignaturePad';
 import { apiRequest } from '../services/api';
+import { useLanguage } from '../context/LanguageContext';
 
 interface Participant {
   id?: string;
@@ -28,6 +29,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
   participants,
   onSuccess
 }) => {
+  const { t } = useLanguage();
   const [step, setStep] = useState<1 | 2>(1);
 
   // Dados do especialista responsável
@@ -107,10 +109,10 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
             </div>
             <div>
               <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-libus-magenta">
-                HOMOLOGAÇÃO TÉCNICA OFICIAL
+                {t.modalSignBadge}
               </span>
               <h3 className="text-lg font-black text-slate-900">
-                Assinatura Digital do Laudo • {companyName}
+                {t.modalSignTitle} • {companyName}
               </h3>
             </div>
           </div>
@@ -142,7 +144,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
             </div>
             <div className="min-w-0">
               <span className="text-[9px] font-mono uppercase block text-slate-400 font-bold">1º Signatário</span>
-              <strong className="text-xs truncate block">Especialista responsável</strong>
+              <strong className="text-xs truncate block">{t.modalStep1TechTab.split(':')[1]?.trim() || 'Especialista'}</strong>
             </div>
           </button>
 
@@ -170,7 +172,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
             </div>
             <div className="min-w-0">
               <span className="text-[9px] font-mono uppercase block text-slate-400 font-bold">2º Signatário</span>
-              <strong className="text-xs truncate block">Responsável Cliente / SESMT</strong>
+              <strong className="text-xs truncate block">{t.modalStep2ClientTab.split(':')[1]?.trim() || 'Cliente'}</strong>
             </div>
           </button>
         </div>
@@ -187,7 +189,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
           <div className="space-y-4 animate-in fade-in duration-150">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1">
-                Nome do Especialista Responsável
+                {t.modalTechSignTitle}
               </label>
               <input
                 type="text"
@@ -198,7 +200,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
               />
             </div>
 
-            {/* Termo NR-6 de Orientação Prévia */}
+            {/* Termo de Orientação Prévia */}
             <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
               <label className="flex items-start gap-2.5 cursor-pointer">
                 <input
@@ -208,28 +210,28 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
                   className="mt-0.5 w-4 h-4 rounded text-libus-magenta focus:ring-libus-magenta border-slate-300"
                 />
                 <span className="text-xs font-bold text-slate-800 leading-tight">
-                  Atesto instrução prévia presencial sobre correta colocação e ajuste aos operadores (NR-6)
+                  {t.modalTechInstructedCheck}
                 </span>
               </label>
               <textarea
                 rows={2}
                 value={instructionNotes}
                 onChange={(e) => setInstructionNotes(e.target.value)}
-                placeholder="Observações técnicas de campo ou desvios de colocação observados (opcional)..."
+                placeholder={t.modalTechNotesLabel}
                 className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-700 placeholder-slate-400 focus:ring-2 focus:ring-libus-magenta/40"
               />
             </div>
 
             {/* Canvas de Assinatura do Especialista */}
             <SignaturePad
-              label="Assinatura Manuscrita do Especialista Responsável"
-              subLabel="Assine na tela com o dedo, caneta stylus ou mouse"
+              label={t.modalTechSignTitle}
+              subLabel={t.modalTechSignPrompt}
               onSignatureChange={(sig) => setTechnicianSignature(sig)}
             />
 
             <div className="flex justify-between items-center pt-2">
               <span className="text-[11px] text-slate-400 font-mono">
-                {technicianSignature ? '✓ Assinatura capturada' : 'Traço pendente'}
+                {technicianSignature ? t.modalCapturedBadge : (t.all === 'Todas' ? 'Traço pendente' : 'Firma pendiente')}
               </span>
               <button
                 type="button"
@@ -243,7 +245,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
                 }}
                 className="px-5 py-2.5 bg-libus-magenta hover:bg-libus-magentaHover text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition flex items-center gap-1.5 shadow-md"
               >
-                <span>Avançar para Assinatura do Cliente</span>
+                <span>{t.modalAdvanceToClient}</span>
                 <ArrowRight size={14} />
               </button>
             </div>
@@ -257,7 +259,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
             {participants.length > 0 && (
               <div className="space-y-1.5">
                 <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-500 block">
-                  Ou selecione um colaborador participante:
+                  {t.modalClientSelectParticipant}
                 </span>
                 <div className="flex flex-wrap gap-1.5">
                   {participants.map((p, idx) => (
@@ -278,7 +280,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1">
-                  Nome do Responsável / SESMT *
+                  {t.modalClientNameLabel}
                 </label>
                 <input
                   type="text"
@@ -292,7 +294,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
 
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1">
-                  Cargo / Área *
+                  {t.modalClientRoleLabel}
                 </label>
                 <input
                   type="text"
@@ -307,7 +309,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
 
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1">
-                Registro Profissional / CPF / Matrícula (Opcional)
+                {t.modalClientDocLabel}
               </label>
               <input
                 type="text"
@@ -320,8 +322,8 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
 
             {/* Canvas de Assinatura do Cliente */}
             <SignaturePad
-              label="Assinatura do Responsável do Cliente"
-              subLabel="Passe o dispositivo para o responsável assinar na tela"
+              label={t.modalClientSignTitle}
+              subLabel={t.modalClientSignPrompt}
               onSignatureChange={(sig) => setClientSignature(sig)}
             />
 
@@ -331,7 +333,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
                 onClick={() => setStep(1)}
                 className="px-4 py-2.5 text-slate-600 hover:text-slate-900 text-xs font-mono font-bold uppercase transition"
               >
-                ← Voltar Etapa 1
+                {t.modalBackStep1}
               </button>
 
               <button
@@ -341,7 +343,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
                 className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-lg hover:shadow-xl"
               >
                 <CheckCircle2 size={16} />
-                <span>{loading ? 'Homologando...' : 'HOMOLOGAR E ASSINAR LAUDO'}</span>
+                <span>{loading ? t.modalSigningLoading : t.modalSubmitSign}</span>
               </button>
             </div>
           </div>

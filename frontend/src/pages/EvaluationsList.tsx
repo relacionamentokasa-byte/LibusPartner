@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   ClipboardCheck,
   Plus,
@@ -23,6 +24,7 @@ import {
 
 export const EvaluationsListPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isManagerOrAdmin = user?.role === 'ADMIN' || user?.role === 'GESTOR';
   const [evaluations, setEvaluations] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,14 +102,14 @@ export const EvaluationsListPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-libus-magenta"></span>
             <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">
-              REGISTROS AUDITÁVEIS
+              {t.evalListBadge}
             </span>
           </div>
           <h1 className="text-2xl font-black text-slate-900 tracking-tight mt-1">
-            Histórico de Laudos & Homologações
+            {t.evalListTitle}
           </h1>
           <p className="text-xs text-slate-500 mt-0.5">
-            Registro oficial de todos os comparativos de campo e avaliações normativas realizadas.
+            {t.evalListSubtitle}
           </p>
         </div>
 
@@ -116,7 +118,7 @@ export const EvaluationsListPage: React.FC = () => {
           className="inline-flex items-center gap-2 bg-gradient-to-r from-libus-magenta to-libus-magentaHover hover:brightness-105 text-white font-bold px-5 py-3 rounded-xl shadow-lg hover:shadow-pink-500/20 transition text-xs uppercase tracking-wider font-mono self-start sm:self-auto"
         >
           <Plus size={15} />
-          <span>Nova Avaliação</span>
+          <span>{t.evalListNewBtn}</span>
         </Link>
       </div>
 
@@ -126,7 +128,7 @@ export const EvaluationsListPage: React.FC = () => {
           <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
           <input
             type="text"
-            placeholder="Buscar por Empresa, CNPJ, Técnico ou Produto (Libus/Concorrente)..."
+            placeholder={t.evalListSearchPlaceholder}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-libus-magenta/40 focus:border-libus-magenta text-slate-800 placeholder-slate-400"
@@ -151,7 +153,7 @@ export const EvaluationsListPage: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <span>Todos</span>
+            <span>{t.all}</span>
             <span className={`text-[10px] px-1.5 py-0.2 rounded ${statusFilter === 'ALL' ? 'bg-slate-100 text-slate-700 font-bold' : 'bg-slate-200 text-slate-500'}`}>
               {evaluations.length}
             </span>
@@ -165,9 +167,9 @@ export const EvaluationsListPage: React.FC = () => {
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <CheckCircle2 size={12} className="text-emerald-600" />
-            <span>Homologadas</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded ${statusFilter === 'COMPLETED' ? 'bg-emerald-50 text-emerald-700 font-bold' : 'bg-slate-200 text-slate-500'}`}>
+            <CheckCircle2 size={13} className="text-emerald-600" />
+            <span>{t.dashStatusCompleted}</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded ${statusFilter === 'COMPLETED' ? 'bg-emerald-50 text-emerald-800 font-bold' : 'bg-slate-200 text-slate-500'}`}>
               {completedCount}
             </span>
           </button>
@@ -176,13 +178,13 @@ export const EvaluationsListPage: React.FC = () => {
             onClick={() => setStatusFilter('IN_PROGRESS')}
             className={`px-3 py-1.5 rounded-lg text-xs font-mono font-bold transition flex items-center gap-1.5 ${
               statusFilter === 'IN_PROGRESS'
-                ? 'bg-white text-libus-magenta shadow-xs border border-slate-200/80'
+                ? 'bg-white text-slate-800 shadow-xs border border-slate-200/80'
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Clock size={12} className="text-slate-400" />
-            <span>Em Campo</span>
-            <span className={`text-[10px] px-1.5 py-0.2 rounded ${statusFilter === 'IN_PROGRESS' ? 'bg-pink-50 text-libus-magenta font-bold' : 'bg-slate-200 text-slate-500'}`}>
+            <Clock size={13} className="text-slate-400" />
+            <span>{t.dashStatusInProgress}</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded ${statusFilter === 'IN_PROGRESS' ? 'bg-slate-200 text-slate-800 font-bold' : 'bg-slate-200 text-slate-500'}`}>
               {inProgressCount}
             </span>
           </button>
@@ -193,16 +195,16 @@ export const EvaluationsListPage: React.FC = () => {
       <div className="bg-white rounded-2xl border border-slate-200/90 shadow-xs overflow-hidden">
         {loading ? (
           <div className="p-16 text-center text-slate-400 text-xs font-mono">
-            Carregando base de dados de homologações...
+            {t.loading}
           </div>
         ) : filtered.length === 0 ? (
           <div className="p-16 text-center">
             <div className="w-14 h-14 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3 border border-slate-200">
               <ClipboardCheck size={24} />
             </div>
-            <p className="text-sm font-bold text-slate-800">Nenhum laudo encontrado</p>
+            <p className="text-sm font-bold text-slate-800">{t.evalListEmptyTitle}</p>
             <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
-              Verifique o termo buscado ou inicie uma nova avaliação técnica de campo.
+              {t.evalListEmptyDesc}
             </p>
           </div>
         ) : (
@@ -223,20 +225,20 @@ export const EvaluationsListPage: React.FC = () => {
                     {ev.status === 'COMPLETED' ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-mono flex-shrink-0">
                         <CheckCircle2 size={11} className="text-emerald-600" />
-                        <span>Homologada</span>
+                        <span>{t.dashStatusCompleted}</span>
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200 font-mono flex-shrink-0">
                         <Clock size={11} className="text-slate-400" />
-                        <span>Em Campo</span>
+                        <span>{t.dashStatusInProgress}</span>
                       </span>
                     )}
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-                    <span className="text-slate-500 font-medium">Técnico: <strong className="text-slate-800 font-bold">{ev.leadTechnician?.name}</strong></span>
+                    <span className="text-slate-500 font-medium">{t.dashColTech}: <strong className="text-slate-800 font-bold">{ev.leadTechnician?.name}</strong></span>
                     <span>•</span>
-                    <span className="font-mono text-slate-500 text-[11px]">{new Date(ev.createdAt).toLocaleDateString('pt-BR')}</span>
+                    <span className="font-mono text-slate-500 text-[11px]">{new Date(ev.createdAt).toLocaleDateString(t.all === 'Todas' ? 'pt-BR' : 'es-AR')}</span>
                   </div>
 
                   {ev.comparisons && ev.comparisons.length > 0 && (
@@ -257,13 +259,13 @@ export const EvaluationsListPage: React.FC = () => {
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition font-mono"
                     >
                       <FileCheck2 size={13} />
-                      <span>Laudo PDF</span>
+                      <span>PDF</span>
                     </Link>
                     <Link
                       to={`/evaluations/${ev.id}`}
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-slate-800 hover:text-white rounded-lg text-xs font-bold text-slate-700 transition border border-slate-200 font-mono"
                     >
-                      <span>Abrir</span>
+                      <span>{t.open}</span>
                       <ChevronRight size={13} />
                     </Link>
                     {/* Ações Técnicas e de Gestão */}
@@ -286,12 +288,12 @@ export const EvaluationsListPage: React.FC = () => {
               <table className="w-full text-left text-xs">
                 <thead className="bg-slate-100/70 text-slate-600 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200 font-mono">
                   <tr>
-                    <th className="px-6 py-4">Empresa Homologada</th>
-                    <th className="px-6 py-4">Técnico Libus</th>
-                    <th className="px-6 py-4">Produtos Avaliados (1x1)</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Data Registro</th>
-                    <th className="px-6 py-4 text-right">Ação</th>
+                    <th className="px-6 py-4">{t.dashColCompany}</th>
+                    <th className="px-6 py-4">{t.dashColTech}</th>
+                    <th className="px-6 py-4">{t.dashColPairs}</th>
+                    <th className="px-6 py-4">{t.dashColStatus}</th>
+                    <th className="px-6 py-4">{t.dashColDate}</th>
+                    <th className="px-6 py-4 text-right">{t.dashColAction}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
@@ -299,11 +301,11 @@ export const EvaluationsListPage: React.FC = () => {
                     <tr key={ev.id} className="hover:bg-slate-50/80 transition group">
                       <td className="px-6 py-4">
                         <div className="font-bold text-slate-900 text-sm">{ev.company?.tradeName}</div>
-                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || 'CNPJ não informado'}</div>
+                        <div className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || (t.all === 'Todas' ? 'CNPJ não informado' : 'ID fiscal no informado')}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="font-semibold text-slate-800">{ev.leadTechnician?.name}</div>
-                        <div className="text-[10px] text-slate-400 uppercase font-mono">{ev.leadTechnician?.role || 'Técnico Especialista'}</div>
+                        <div className="text-[10px] text-slate-400 uppercase font-mono">{ev.leadTechnician?.role || (t.all === 'Todas' ? 'Técnico Especialista' : 'Especialista Técnico')}</div>
                       </td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
@@ -320,17 +322,17 @@ export const EvaluationsListPage: React.FC = () => {
                         {ev.status === 'COMPLETED' ? (
                           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 font-mono">
                             <CheckCircle2 size={13} className="text-emerald-600" />
-                            <span>Homologada</span>
+                            <span>{t.dashStatusCompleted}</span>
                           </div>
                         ) : (
                           <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 font-mono">
                             <Clock size={13} className="text-slate-400" />
-                            <span>Em Campo</span>
+                            <span>{t.dashStatusInProgress}</span>
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 text-slate-500 font-mono text-[11px]">
-                        {new Date(ev.createdAt).toLocaleDateString('pt-BR')}
+                        {new Date(ev.createdAt).toLocaleDateString(t.all === 'Todas' ? 'pt-BR' : 'es-AR')}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -346,7 +348,7 @@ export const EvaluationsListPage: React.FC = () => {
                             to={`/evaluations/${ev.id}`}
                             className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-100 hover:bg-libus-charcoal hover:text-white rounded-lg text-xs font-bold text-slate-700 transition border border-slate-200 group-hover:border-slate-300 font-mono"
                           >
-                            <span>Editar</span>
+                            <span>{t.open}</span>
                             <ChevronRight size={13} />
                           </Link>
                           {(isManagerOrAdmin || ev.leadTechnicianId === user?.id) && (

@@ -4,6 +4,7 @@ import { getManufacturerLogo } from '../utils/manufacturerLogos';
 import { getProductSpec } from '../utils/productSpecifications';
 import { getCaConsultUrl } from '../utils/caHelper';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import {
   Layers,
   ShieldCheck,
@@ -67,6 +68,7 @@ interface LibusProductWithEquivalences {
 
 export const CatalogPage: React.FC = () => {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const isManager = user?.role === 'ADMIN' || user?.role === 'GESTOR';
 
   const [families, setFamilies] = useState<any[]>([]);
@@ -225,23 +227,23 @@ export const CatalogPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-libus-magenta"></span>
           <span className="text-[10px] font-mono uppercase tracking-widest text-slate-500 font-bold">
-            ENGENHARIA DE PRODUTOS & MATRIZ DE CONVERSÃO
+            {t.catalogBadge}
           </span>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-1">
           <div>
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-              Catálogo Oficial Libus & Equivalências
+              {t.catalogTitle}
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Portfólio de EPIs Libus com matriz de equivalências técnicas e fotos normativas em fundo transparente.
+              {t.catalogSubtitle}
             </p>
           </div>
           <div className="flex items-center gap-3">
             {isManager && (
               <span className="text-[11px] font-mono font-bold px-3 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1.5">
                 <Camera size={13} />
-                <span>Gestão de Fotos Ativa</span>
+                <span>{t.catalogManagePhotosActive}</span>
               </span>
             )}
             <Link
@@ -249,7 +251,7 @@ export const CatalogPage: React.FC = () => {
               className="inline-flex items-center gap-2 px-4 py-2 bg-libus-magenta hover:bg-libus-magentaHover text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition shadow-sm self-start sm:self-auto"
             >
               <PlusCircle size={14} />
-              <span>Nova Homologação</span>
+              <span>{t.catalogNewEvaluationBtn}</span>
             </Link>
           </div>
         </div>
@@ -271,7 +273,7 @@ export const CatalogPage: React.FC = () => {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
               }`}
             >
-              <span>Todas as Famílias</span>
+              <span>{t.catalogAllFamilies}</span>
               <span className={`text-[10px] px-1.5 py-0.2 rounded-md ${selectedFamily === 'all' ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-600'}`}>
                 {products.length}
               </span>
@@ -318,7 +320,7 @@ export const CatalogPage: React.FC = () => {
               <Search size={15} className="absolute left-3.5 top-3 text-slate-400" />
               <input
                 type="text"
-                placeholder="Buscar modelo Libus, concorrente ou C.A..."
+                placeholder={t.catalogSearchPlaceholder}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-libus-magenta/40 focus:border-libus-magenta text-slate-800 placeholder-slate-400"
@@ -345,7 +347,7 @@ export const CatalogPage: React.FC = () => {
                 title="Visualização em Grade (Cards)"
               >
                 <LayoutGrid size={15} />
-                <span className="hidden sm:inline">Grade</span>
+                <span className="hidden sm:inline">{t.viewGrid}</span>
               </button>
               <button
                 onClick={() => setViewMode('list')}
@@ -357,7 +359,7 @@ export const CatalogPage: React.FC = () => {
                 title="Visualização em Lista / Tabela De-Para"
               >
                 <List size={15} />
-                <span className="hidden sm:inline">Lista</span>
+                <span className="hidden sm:inline">{t.viewList}</span>
               </button>
             </div>
           </div>
@@ -367,7 +369,7 @@ export const CatalogPage: React.FC = () => {
         {availableCategories.length > 1 && (
           <div className="pt-2.5 border-t border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
             <span className="text-[10px] font-mono font-bold uppercase text-slate-400 flex items-center gap-1 mr-1 flex-shrink-0">
-              <Filter size={12} /> Categoria:
+              <Filter size={12} /> {t.catalogCategoryFilter}
             </span>
             <button
               onClick={() => setSelectedCategory('all')}
@@ -377,7 +379,7 @@ export const CatalogPage: React.FC = () => {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               }`}
             >
-              Todas
+              {t.catalogAllCategories}
             </button>
             {availableCategories.map((cat: any) => {
               const isSelected = selectedCategory === cat.id;
@@ -506,12 +508,12 @@ export const CatalogPage: React.FC = () => {
                 <div className="flex-1 min-w-0 border-t md:border-t-0 md:border-l border-slate-100 pt-2.5 md:pt-0 md:pl-3.5">
                   <div className="flex items-center justify-between mb-1.5">
                     <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-slate-400">
-                      Equivalências de Mercado ({eqList.length})
+                      {t.catalogMarketEquiv} ({eqList.length})
                     </span>
                   </div>
 
                   {eqList.length === 0 ? (
-                    <span className="text-xs text-slate-400 italic">Nenhum concorrente cadastrado</span>
+                    <span className="text-xs text-slate-400 italic">{t.catalogNoCompetitors}</span>
                   ) : (
                     <div className="flex flex-wrap gap-1.5">
                       {eqList.map((eq) => {
@@ -578,7 +580,7 @@ export const CatalogPage: React.FC = () => {
                     to="/evaluations/new"
                     className="w-full md:w-auto inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-lg bg-libus-magenta/10 text-libus-magenta hover:bg-libus-magenta hover:text-white font-bold text-xs transition"
                   >
-                    <span>Homologar</span>
+                    <span>{t.catalogHomologateBtn}</span>
                     <ExternalLink size={11} />
                   </Link>
                 </div>
