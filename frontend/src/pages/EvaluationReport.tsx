@@ -29,7 +29,8 @@ import {
   Recycle,
   Trash2,
   PenTool,
-  Clock
+  Clock,
+  MessageCircle
 } from 'lucide-react';
 import { HomologationSignatureModal } from '../components/HomologationSignatureModal';
 
@@ -66,6 +67,24 @@ export const EvaluationReportPage: React.FC = () => {
       }
     } catch (_) {}
     window.print();
+  };
+
+  const handleShareWhatsApp = () => {
+    if (!evaluation) return;
+    const companyName = evaluation.company?.tradeName || 'Cliente';
+    const techName = evaluation.leadTechnician?.name || 'Especialista Libus';
+    const statusText = evaluation.signedAt ? 'Homologado com Assinatura Digital' : 'Em Andamento';
+    const currentUrl = window.location.href;
+
+    const message = `*LAUDO TÉCNICO DE HOMOLOGAÇÃO DE EPI — LIBUS DO BRASIL*\n\n` +
+      `🏢 *Empresa:* ${companyName}\n` +
+      `👷 *Especialista Responsável:* ${techName}\n` +
+      `📋 *Status:* ${statusText}\n` +
+      `🔗 *Acesse o laudo completo pelo link:* ${currentUrl}\n\n` +
+      `_Documento emitido em conformidade com as normas regulamentadoras vigentes._`;
+
+    const encodedMsg = encodeURIComponent(message);
+    window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, '_blank');
   };
 
   if (loading) {
@@ -201,8 +220,17 @@ export const EvaluationReportPage: React.FC = () => {
           </button>
 
           <button
+            onClick={handleShareWhatsApp}
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md active:scale-95 cursor-pointer font-mono"
+            title="Compartilhar resumo e link do laudo via WhatsApp"
+          >
+            <MessageCircle size={15} />
+            <span>WhatsApp</span>
+          </button>
+
+          <button
             onClick={handlePrint}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-md active:scale-95 cursor-pointer font-mono"
           >
             <Printer size={15} />
             <span>Imprimir / Gerar PDF</span>
