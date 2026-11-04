@@ -9,6 +9,7 @@ import { catalogRouter } from './modules/catalog/routes.js';
 import { evaluationsRouter } from './modules/evaluations/routes.js';
 import { auditRouter } from './modules/audit/routes.js';
 import { alvesRouter, publicAlvesRouter } from './modules/alves/routes.js';
+import { odooRouter } from './modules/integrations/odooRoutes.js';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use('/api/companies', companiesRouter);
 app.use('/api/catalog', catalogRouter);
 app.use('/api/evaluations', evaluationsRouter);
 app.use('/api/audit', auditRouter);
+app.use('/api/integrations/odoo', odooRouter);
 app.use('/api/alves', alvesRouter);
 app.use('/api/public', publicAlvesRouter);
 

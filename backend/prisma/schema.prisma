@@ -42,6 +42,11 @@ model Company {
   active        Boolean      @default(true)
   createdById   String?
   updatedById   String?
+
+  // Rastreabilidade e Integração Odoo ERP (res.partner)
+  odooPartnerId Int?         @unique
+  odooSyncedAt  DateTime?
+
   evaluations   Evaluation[]
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
@@ -85,6 +90,12 @@ model LibusProduct {
   description    String?
   imageUrl       String?
   active         Boolean                @default(true)
+
+  // Rastreabilidade e Integração Odoo ERP (product.product / product.template)
+  odooProductId  Int?                   @unique
+  odooTemplateId Int?
+  odooSyncedAt   DateTime?
+
   equivalences   ProductEquivalence[]
   attributeValues ProductAttributeValue[]
   evaluations    EvaluationComparison[]
@@ -187,6 +198,13 @@ model Evaluation {
   clientSignerName     String?
   clientSignerRole     String?                // Cargo/Área (ex: Coordenador de SESMT, Eng. Segurança)
   clientSignerDocument String?                // CPF, Registro ou Matrícula funcional
+
+  // Rastreabilidade e Integração Odoo ERP (crm.lead / sale.order)
+  odooLeadId           Int?
+  odooOrderId          Int?
+  odooSyncStatus       String?                // PENDING, SYNCED, FAILED
+  odooSyncedAt         DateTime?
+  odooSyncError        String?
 
   participants         EvaluationParticipant[]
   comparisons          EvaluationComparison[]
