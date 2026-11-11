@@ -24,7 +24,10 @@ async function createCommercialDeck() {
   const COLOR_CARD_LIGHT  = 'F8FAFC';
   const COLOR_BORDER_LINE = 'E2E8F0';
 
-  const FONT_HEAD = 'Montserrat';
+  // HIERARQUIA TIPOGRÁFICA OFICIAL DO BRANDBOOK LIBUS:
+  // - Principal / Títulos: Avenir Next (ou Avenir)
+  // - Complementar / Subtítulos e Textos de apoio: Montserrat
+  const FONT_HEAD = 'Avenir Next';
   const FONT_BODY = 'Montserrat';
 
   const dir = path.resolve('manual_screenshots');
