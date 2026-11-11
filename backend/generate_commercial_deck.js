@@ -24,8 +24,8 @@ async function createCommercialDeck() {
   const COLOR_CARD_LIGHT  = 'F8FAFC';
   const COLOR_BORDER_LINE = 'E2E8F0';
 
-  const FONT_HEAD = 'Arial';
-  const FONT_BODY = 'Arial';
+  const FONT_HEAD = 'Montserrat';
+  const FONT_BODY = 'Montserrat';
 
   const dir = path.resolve('manual_screenshots');
   const imgLogin    = path.join(dir, '01_login_annotated.png');
