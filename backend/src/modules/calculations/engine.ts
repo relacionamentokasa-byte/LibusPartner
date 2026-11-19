@@ -1,12 +1,15 @@
 export interface CriterionCalculationInput {
   attributeId: string;
+  participantId?: string | null;
   libusScore?: number | null; // 1 a 10
   competitorScore?: number | null; // 1 a 10
   isNotApplicable?: boolean;
 }
 
 export interface TechnicalCalculationResult {
+  participantCount?: number;
   totalCriteria: number;
+  averageByParticipant?: Record<string, { libusAverageScore: number; competitorAverageScore: number; validCriteria: number }>;
   validCriteria: number; // Ignora N/A e não preenchidos
   naCriteria: number;
   libusSuperiorCount: number;
@@ -115,6 +118,75 @@ export function calculateTechnicalResult(
     libusAverageScore,
     competitorAverageScore,
     details
+  };
+}
+
+/**
+ * Consolida várias respostas do mesmo critério por média da equipe.
+ * Respostas antigas sem participantId continuam sendo tratadas como legado.
+ */
+export function calculateTeamTechnicalResult(
+  responses: CriterionCalculationInput[]
+): TechnicalCalculationResult {
+  const grouped = new Map<string, CriterionCalculationInput[]>();
+
+  for (const response of responses) {
+    const current = grouped.get(response.attributeId) || [];
+    current.push(response);
+    grouped.set(response.attributeId, current);
+  }
+
+  const averagedResponses: CriterionCalculationInput[] = [];
+  const averageByParticipant: Record<string, { libusAverageScore: number; competitorAverageScore: number; validCriteria: number }> = {};
+  const participantGroups = new Map<string, CriterionCalculationInput[]>();
+
+  for (const response of responses) {
+    const participantKey = response.participantId || 'legacy';
+    const current = participantGroups.get(participantKey) || [];
+    current.push(response);
+    participantGroups.set(participantKey, current);
+  }
+
+  participantGroups.forEach((participantResponses, participantId) => {
+    if (participantId === 'legacy' && participantGroups.size > 1) return;
+    const result = calculateTechnicalResult(participantResponses);
+    averageByParticipant[participantId] = {
+      libusAverageScore: result.libusAverageScore,
+      competitorAverageScore: result.competitorAverageScore,
+      validCriteria: result.validCriteria
+    };
+  });
+
+  grouped.forEach((criterionResponses, attributeId) => {
+    // Once a criterion has participant-owned answers, ignore its legacy answer.
+    const hasParticipantAnswers = criterionResponses.some(response => response.participantId);
+    const responsesForCriterion = hasParticipantAnswers
+      ? criterionResponses.filter(response => response.participantId)
+      : criterionResponses;
+    const valid = responsesForCriterion.filter(response =>
+      !response.isNotApplicable &&
+      typeof response.libusScore === 'number' && response.libusScore >= 1 && response.libusScore <= 10 &&
+      typeof response.competitorScore === 'number' && response.competitorScore >= 1 && response.competitorScore <= 10
+    );
+
+    if (valid.length === 0) {
+      averagedResponses.push({ attributeId, isNotApplicable: responsesForCriterion.every(response => response.isNotApplicable) });
+      return;
+    }
+
+    averagedResponses.push({
+      attributeId,
+      libusScore: Number((valid.reduce((sum, response) => sum + Number(response.libusScore), 0) / valid.length).toFixed(2)),
+      competitorScore: Number((valid.reduce((sum, response) => sum + Number(response.competitorScore), 0) / valid.length).toFixed(2)),
+      isNotApplicable: false
+    });
+  });
+
+  const result = calculateTechnicalResult(averagedResponses);
+  return {
+    ...result,
+    participantCount: participantGroups.has('legacy') ? Math.max(0, participantGroups.size - 1) : participantGroups.size,
+    averageByParticipant
   };
 }
 

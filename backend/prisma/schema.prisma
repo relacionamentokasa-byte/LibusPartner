@@ -243,8 +243,9 @@ model EvaluationParticipant {
   roleOrArea   String     // Ex: Operador / Produção, Técnico Segurança, Compras
   companyName  String?
   email        String?
-  phone        String?
-  createdAt    DateTime   @default(now())
+  phone             String?
+  createdAt         DateTime                      @default(now())
+  criterionResponses EvaluationCriterionResponse[]
 
   @@map("evaluation_participants")
 }
@@ -271,6 +272,8 @@ model EvaluationCriterionResponse {
   id              String               @id @default(uuid())
   comparisonId    String
   comparison      EvaluationComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  participantId   String?
+  participant     EvaluationParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
   attributeId     String
   attribute       TechnicalAttribute   @relation(fields: [attributeId], references: [id])
   libusScore      Int?                 // 1 a 10
@@ -279,7 +282,8 @@ model EvaluationCriterionResponse {
   observation     String?
   createdAt       DateTime             @default(now())
 
-  @@unique([comparisonId, attributeId])
+  @@unique([comparisonId, attributeId, participantId])
+  @@index([participantId])
   @@map("evaluation_criterion_responses")
 }
 

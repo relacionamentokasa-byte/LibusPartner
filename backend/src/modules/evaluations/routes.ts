@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma.js';
 import { authMiddleware } from '../../middlewares/auth.js';
-import { calculateTechnicalResult, calculateEconomicResult } from '../calculations/engine.js';
+import { calculateTechnicalResult, calculateTeamTechnicalResult, calculateEconomicResult } from '../calculations/engine.js';
 import { createAuditLog } from '../../lib/audit.js';
 
 export const evaluationsRouter = Router();
@@ -32,7 +32,7 @@ evaluationsRouter.get('/', async (req: Request, res: Response) => {
         include: {
           libusProduct: true,
           competitorProduct: { include: { manufacturer: true } },
-          responses: true,
+          responses: { include: { participant: true } },
           economicResult: true
         }
       }
@@ -67,7 +67,7 @@ evaluationsRouter.get('/:id', async (req: Request, res: Response) => {
             }
           },
           responses: {
-            include: { attribute: true }
+            include: { attribute: true, participant: true }
           },
           economicResult: true
         }
@@ -85,12 +85,19 @@ evaluationsRouter.get('/:id', async (req: Request, res: Response) => {
     return res.status(403).json({ error: 'Acesso negado: você só pode visualizar avaliações conduzidas por você.' });
   }
 
-  // Calcular resultados consolidados para cada comparação
+  // Consolidar as respostas individuais por média da equipe.
   const processedComparisons = evaluation.comparisons.map(comp => {
-    const technicalResult = calculateTechnicalResult(comp.responses);
+    const technicalResult = calculateTeamTechnicalResult(comp.responses.map(response => ({
+      attributeId: response.attributeId,
+      participantId: response.participantId,
+      libusScore: response.libusScore,
+      competitorScore: response.competitorScore,
+      isNotApplicable: response.isNotApplicable
+    })));
     return {
       ...comp,
-      technicalResult
+      technicalResult,
+      teamResponseCount: new Set(comp.responses.map(response => response.participantId).filter(Boolean)).size
     };
   });
 
@@ -182,7 +189,13 @@ evaluationsRouter.post('/', async (req: Request, res: Response) => {
       ipAddress: req.ip
     });
 
-    // Auto-popular critérios técnicos das categorias para cada comparação
+    // Auto-popular critérios técnicos para cada participante.
+    // Avaliações antigas sem participantes continuam usando uma resposta legada.
+    const createdParticipants = await prisma.evaluationParticipant.findMany({
+      where: { evaluationId: evaluation.id },
+      select: { id: true }
+    });
+
     for (const comp of evaluation.comparisons) {
       const attributes = await prisma.technicalAttribute.findMany({
         where: { categoryId: comp.libusProduct.categoryId },
@@ -190,14 +203,28 @@ evaluationsRouter.post('/', async (req: Request, res: Response) => {
       });
 
       for (const attr of attributes) {
-        await prisma.evaluationCriterionResponse.create({
-          data: {
+        if (createdParticipants.length === 0) {
+          await prisma.evaluationCriterionResponse.create({
+            data: {
+              comparisonId: comp.id,
+              attributeId: attr.id,
+              libusScore: null,
+              competitorScore: null,
+              isNotApplicable: false
+            }
+          });
+          continue;
+        }
+
+        await prisma.evaluationCriterionResponse.createMany({
+          data: createdParticipants.map(participant => ({
             comparisonId: comp.id,
+            participantId: participant.id,
             attributeId: attr.id,
             libusScore: null,
             competitorScore: null,
             isNotApplicable: false
-          }
+          }))
         });
       }
     }
@@ -214,6 +241,7 @@ evaluationsRouter.post('/', async (req: Request, res: Response) => {
 
 // Atualizar notas de um comparativo
 const updateScoresSchema = z.object({
+  participantId: z.string().optional(),
   responses: z.array(z.object({
     attributeId: z.string(),
     libusScore: z.number().min(1).max(10).nullable().optional(),
@@ -226,37 +254,75 @@ const updateScoresSchema = z.object({
 evaluationsRouter.put('/comparisons/:comparisonId/scores', async (req: Request, res: Response) => {
   try {
     const { comparisonId } = req.params;
-    const { responses } = updateScoresSchema.parse(req.body);
+    const { participantId, responses } = updateScoresSchema.parse(req.body);
 
-    for (const r of responses) {
-      await prisma.evaluationCriterionResponse.upsert({
+    if (participantId) {
+      const participant = await prisma.evaluationParticipant.findFirst({
         where: {
-          comparisonId_attributeId: {
-            comparisonId,
-            attributeId: r.attributeId
-          }
-        },
-        update: {
-          libusScore: r.isNotApplicable ? null : r.libusScore,
-          competitorScore: r.isNotApplicable ? null : r.competitorScore,
-          isNotApplicable: r.isNotApplicable ?? false,
-          observation: r.observation
-        },
-        create: {
-          comparisonId,
-          attributeId: r.attributeId,
-          libusScore: r.isNotApplicable ? null : r.libusScore,
-          competitorScore: r.isNotApplicable ? null : r.competitorScore,
-          isNotApplicable: r.isNotApplicable ?? false,
-          observation: r.observation
+          id: participantId,
+          evaluation: { leadTechnicianId: req.user!.id }
         }
       });
+      if (!participant && req.user!.role === 'TECNICO') {
+        return res.status(403).json({ error: 'Participante não pertence à sua avaliação.' });
+      }
     }
 
-    // Retornar resultado técnico recalculado
+    for (const r of responses) {
+      if (participantId) {
+        await prisma.evaluationCriterionResponse.upsert({
+          where: {
+            comparisonId_attributeId_participantId: {
+              comparisonId,
+              attributeId: r.attributeId,
+              participantId
+            }
+          },
+          update: {
+            libusScore: r.isNotApplicable ? null : r.libusScore,
+            competitorScore: r.isNotApplicable ? null : r.competitorScore,
+            isNotApplicable: r.isNotApplicable ?? false,
+            observation: r.observation
+          },
+          create: {
+            comparisonId,
+            participantId,
+            attributeId: r.attributeId,
+            libusScore: r.isNotApplicable ? null : r.libusScore,
+            competitorScore: r.isNotApplicable ? null : r.competitorScore,
+            isNotApplicable: r.isNotApplicable ?? false,
+            observation: r.observation
+          }
+        });
+      } else {
+        // Compatibilidade com respostas legadas sem participante.
+        const legacyResponse = await prisma.evaluationCriterionResponse.findFirst({
+          where: { comparisonId, attributeId: r.attributeId, participantId: null },
+          select: { id: true }
+        });
+        const legacyData = {
+          libusScore: r.isNotApplicable ? null : r.libusScore,
+          competitorScore: r.isNotApplicable ? null : r.competitorScore,
+          isNotApplicable: r.isNotApplicable ?? false,
+          observation: r.observation
+        };
+        if (legacyResponse) {
+          await prisma.evaluationCriterionResponse.update({ where: { id: legacyResponse.id }, data: legacyData });
+        } else {
+          await prisma.evaluationCriterionResponse.create({
+            data: { comparisonId, attributeId: r.attributeId, ...legacyData }
+          });
+        }
+      }
+    }
+
+    // Retornar resultado técnico médio da equipe
     const updatedResponses = await prisma.evaluationCriterionResponse.findMany({
-      where: { comparisonId }
+      where: { comparisonId },
+      select: { attributeId: true, participantId: true, libusScore: true, competitorScore: true, isNotApplicable: true }
     });
+
+    const technicalResult = calculateTeamTechnicalResult(updatedResponses);
 
     // Atualizar evaluation para atualizar updatedAt e updatedById
     await prisma.evaluation.update({
@@ -264,7 +330,6 @@ evaluationsRouter.put('/comparisons/:comparisonId/scores', async (req: Request, 
       data: { updatedById: req.user!.id }
     }).catch(() => {});
 
-    const technicalResult = calculateTechnicalResult(updatedResponses);
     return res.json({ success: true, technicalResult });
   } catch (err: any) {
     if (err instanceof z.ZodError) {
@@ -472,27 +537,89 @@ evaluationsRouter.put('/:id/participants', async (req: Request, res: Response) =
     const { id } = req.params;
     const { participants } = updateParticipantsSchema.parse(req.body);
 
-    // Substituir participantes da avaliação
-    await prisma.evaluationParticipant.deleteMany({
-      where: { evaluationId: id }
+    const existingParticipants = await prisma.evaluationParticipant.findMany({
+      where: { evaluationId: id },
+      include: { _count: { select: { criterionResponses: true } } }
     });
 
-    const created = await prisma.evaluationParticipant.createMany({
-      data: participants.map(p => ({
-        evaluationId: id,
-        name: p.name,
-        roleOrArea: p.roleOrArea,
-        companyName: p.companyName,
-        email: p.email,
-        phone: p.phone
-      }))
+    const hasAnswered = existingParticipants.some(participant => participant._count.criterionResponses > 0);
+    const incomingNames = new Set(participants.map(participant => participant.name.trim().toLowerCase()));
+    const removedWithAnswers = existingParticipants.filter(participant =>
+      participant._count.criterionResponses > 0 && !incomingNames.has(participant.name.trim().toLowerCase())
+    );
+
+    if (removedWithAnswers.length > 0) {
+      return res.status(409).json({
+        error: 'Não é possível remover participantes que já possuem respostas. Preserve a equipe respondente ou crie uma nova avaliação.'
+      });
+    }
+
+    const createdParticipants = await prisma.$transaction(async tx => {
+      let participantRows;
+      if (!hasAnswered) {
+        await tx.evaluationParticipant.deleteMany({ where: { evaluationId: id } });
+        await tx.evaluationParticipant.createMany({
+          data: participants.map(p => ({
+            evaluationId: id,
+            name: p.name,
+            roleOrArea: p.roleOrArea,
+            companyName: p.companyName,
+            email: p.email,
+            phone: p.phone
+          }))
+        });
+        participantRows = await tx.evaluationParticipant.findMany({ where: { evaluationId: id } });
+      } else {
+        const existingNames = new Set(existingParticipants.map(p => p.name.trim().toLowerCase()));
+        const newParticipants = participants.filter(p => !existingNames.has(p.name.trim().toLowerCase()));
+        if (newParticipants.length > 0) {
+          await tx.evaluationParticipant.createMany({
+            data: newParticipants.map(p => ({
+              evaluationId: id,
+              name: p.name,
+              roleOrArea: p.roleOrArea,
+              companyName: p.companyName,
+              email: p.email,
+              phone: p.phone
+            }))
+          });
+        }
+        participantRows = await tx.evaluationParticipant.findMany({ where: { evaluationId: id } });
+      }
+
+      const comparisons = await tx.evaluationComparison.findMany({
+        where: { evaluationId: id },
+        include: { libusProduct: { select: { categoryId: true } } }
+      });
+      const missingResponses: Array<{ comparisonId: string; participantId: string; attributeId: string }> = [];
+      for (const comparison of comparisons) {
+        const attributes = await tx.technicalAttribute.findMany({
+          where: { categoryId: comparison.libusProduct.categoryId },
+          select: { id: true }
+        });
+        const existing = await tx.evaluationCriterionResponse.findMany({
+          where: { comparisonId: comparison.id, participantId: { not: null } },
+          select: { participantId: true, attributeId: true }
+        });
+        const keys = new Set(existing.map(row => `${row.participantId}:${row.attributeId}`));
+        for (const participant of participantRows) {
+          for (const attribute of attributes) {
+            const key = `${participant.id}:${attribute.id}`;
+            if (!keys.has(key)) {
+              missingResponses.push({ comparisonId: comparison.id, participantId: participant.id, attributeId: attribute.id });
+            }
+          }
+        }
+      }
+      if (missingResponses.length > 0) {
+        await tx.evaluationCriterionResponse.createMany({
+          data: missingResponses.map(row => ({ ...row, isNotApplicable: false }))
+        });
+      }
+      return participantRows;
     });
 
-    const updatedParticipants = await prisma.evaluationParticipant.findMany({
-      where: { evaluationId: id }
-    });
-
-    return res.json({ success: true, participants: updatedParticipants });
+    return res.json({ success: true, participants: createdParticipants });
   } catch (err: any) {
     if (err instanceof z.ZodError) {
       return res.status(400).json({ error: err.errors[0].message });

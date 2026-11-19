@@ -33,10 +33,12 @@ import {
   MessageCircle
 } from 'lucide-react';
 import { HomologationSignatureModal } from '../components/HomologationSignatureModal';
+import { useLanguage } from '../context/LanguageContext';
 
 export const EvaluationReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { language } = useLanguage();
   const [evaluation, setEvaluation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
@@ -115,6 +117,18 @@ export const EvaluationReportPage: React.FC = () => {
   }
 
   const { company, leadTechnician, participants = [], comparisons = [], createdAt } = evaluation;
+  const teamParticipantCount = participants.length;
+  const reportText = language === 'es' ? {
+    participants: 'participantes',
+    teamAverage: 'Promedio del equipo',
+    company: 'Empresa homologada / Planta',
+    specialist: 'Especialista responsable'
+  } : {
+    participants: 'participantes',
+    teamAverage: 'Média da equipe',
+    company: 'Empresa homologada / Cliente',
+    specialist: 'Especialista responsável'
+  };
 
   // Cálculos consolidados gerais do Laudo
   let totalEconomicSavings = 0;
@@ -384,6 +398,7 @@ export const EvaluationReportPage: React.FC = () => {
               <div className="space-y-0.5">
                 <span className="text-[8px] uppercase tracking-wider text-slate-400">Pares Homologados</span>
                 <p className="text-sm font-bold text-white leading-tight">{comparisons.length}</p>
+                <span className="text-[7.5px] text-emerald-300 block">{teamParticipantCount} {reportText.participants}</span>
                 <span className="text-[7.5px] text-slate-400 block">
                   {libusWinsCount} superados / {tiesCount} equivalentes
                 </span>

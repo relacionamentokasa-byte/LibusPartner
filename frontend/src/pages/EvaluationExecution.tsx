@@ -61,8 +61,10 @@ export const EvaluationExecutionPage: React.FC = () => {
     phone?: string;
   }>>([]);
 
-  // Estados locais das notas por comparação
-  const [scoresMap, setScoresMap] = useState<Record<string, Record<string, { libus: number | null; comp: number | null; na: boolean }>>>({});
+  // Notas individuais: participante -> comparação -> critério.
+  const [activeParticipantId, setActiveParticipantId] = useState<string | null>(null);
+  const [scoresMap, setScoresMap] = useState<Record<string, Record<string, Record<string, { libus: number | null; comp: number | null; na: boolean }>>>>({});
+  const [teamScoresMap, setTeamScoresMap] = useState<Record<string, Record<string, { libus: number | null; comp: number | null; na: boolean }>>>({});
 
   // Estados locais econômicos
   const [economicInputs, setEconomicInputs] = useState<Record<string, {
@@ -82,17 +84,40 @@ export const EvaluationExecutionPage: React.FC = () => {
         setEvaluation(data.evaluation);
 
         const initialScores: any = {};
+        const initialTeamScores: any = {};
         const initialEconomic: any = {};
+        const participants = data.evaluation.participants || [];
+        const defaultParticipantId = participants[0]?.id || 'legacy';
+        setActiveParticipantId(defaultParticipantId);
 
         data.evaluation.comparisons.forEach((comp: any) => {
-          initialScores[comp.id] = {};
+          initialScores[defaultParticipantId] ||= {};
+          initialScores[defaultParticipantId][comp.id] = {};
+          initialTeamScores[comp.id] = {};
           comp.responses.forEach((r: any) => {
-            initialScores[comp.id][r.attributeId] = {
+            const participantId = r.participantId || 'legacy';
+            initialScores[participantId] ||= {};
+            initialScores[participantId][comp.id] ||= {};
+            initialScores[participantId][comp.id][r.attributeId] = {
               libus: r.libusScore,
               comp: r.competitorScore,
               na: r.isNotApplicable
             };
           });
+          // Respostas legadas continuam visíveis para avaliações antigas.
+          if (comp.responses.some((r: any) => !r.participantId)) {
+            initialScores.legacy ||= {};
+            initialScores.legacy[comp.id] = Object.fromEntries(comp.responses.map((r: any) => [r.attributeId, {
+              libus: r.libusScore,
+              comp: r.competitorScore,
+              na: r.isNotApplicable
+            }]));
+          }
+          comp.responses.forEach((r: any) => {
+            const current = initialTeamScores[comp.id][r.attributeId];
+            if (!current) initialTeamScores[comp.id][r.attributeId] = { libus: r.libusScore, comp: r.competitorScore, na: r.isNotApplicable };
+          });
+
 
           if (comp.economicResult) {
             initialEconomic[comp.id] = {
@@ -118,6 +143,7 @@ export const EvaluationExecutionPage: React.FC = () => {
         });
 
         setScoresMap(initialScores);
+        setTeamScoresMap(initialTeamScores);
         setEconomicInputs(initialEconomic);
       } catch (err) {
         console.error(err);
@@ -129,48 +155,54 @@ export const EvaluationExecutionPage: React.FC = () => {
   }, [id]);
 
   const activeComparison = evaluation?.comparisons?.[activeComparisonIndex];
+  const activeResponses = activeComparison?.responses?.filter((response: any, index: number, all: any[]) =>
+    all.findIndex(candidate => candidate.attributeId === response.attributeId) === index
+  ) || [];
+
+  const activeParticipantScores = activeParticipantId && activeComparison
+    ? scoresMap[activeParticipantId]?.[activeComparison.id] || {}
+    : {};
 
   const handleScoreChange = (attributeId: string, type: 'libus' | 'comp', value: number) => {
-    if (!activeComparison) return;
+    if (!activeComparison || !activeParticipantId) return;
     const compId = activeComparison.id;
-    const current = scoresMap[compId]?.[attributeId] || { libus: null, comp: null, na: false };
+    const current = activeParticipantScores[attributeId] || { libus: null, comp: null, na: false };
 
     setScoresMap({
       ...scoresMap,
-      [compId]: {
-        ...scoresMap[compId],
-        [attributeId]: {
-          ...current,
-          [type]: value,
-          na: false
+      [activeParticipantId]: {
+        ...scoresMap[activeParticipantId],
+        [compId]: {
+          ...scoresMap[activeParticipantId]?.[compId],
+          [attributeId]: { ...current, [type]: value, na: false }
         }
       }
     });
   };
 
   const handleToggleNA = (attributeId: string) => {
-    if (!activeComparison) return;
+    if (!activeComparison || !activeParticipantId) return;
     const compId = activeComparison.id;
-    const current = scoresMap[compId]?.[attributeId] || { libus: null, comp: null, na: false };
+    const current = activeParticipantScores[attributeId] || { libus: null, comp: null, na: false };
 
     setScoresMap({
       ...scoresMap,
-      [compId]: {
-        ...scoresMap[compId],
-        [attributeId]: {
-          ...current,
-          na: !current.na
+      [activeParticipantId]: {
+        ...scoresMap[activeParticipantId],
+        [compId]: {
+          ...scoresMap[activeParticipantId]?.[compId],
+          [attributeId]: { ...current, na: !current.na }
         }
       }
     });
   };
 
   const handleSaveScores = async () => {
-    if (!activeComparison) return;
+    if (!activeComparison || !activeParticipantId) return;
     setSaving(true);
     try {
       const compId = activeComparison.id;
-      const responsesPayload = Object.entries(scoresMap[compId] || {}).map(([attributeId, vals]) => ({
+      const responsesPayload = Object.entries(activeParticipantScores).map(([attributeId, vals]) => ({
         attributeId,
         libusScore: vals.na ? null : vals.libus,
         competitorScore: vals.na ? null : vals.comp,
@@ -179,19 +211,30 @@ export const EvaluationExecutionPage: React.FC = () => {
 
       const res = await apiRequest(`/evaluations/comparisons/${compId}/scores`, {
         method: 'PUT',
-        body: JSON.stringify({ responses: responsesPayload })
+        body: JSON.stringify({ participantId: activeParticipantId === 'legacy' ? undefined : activeParticipantId, responses: responsesPayload })
       });
 
       const updatedComparisons = [...evaluation.comparisons];
       updatedComparisons[activeComparisonIndex].technicalResult = res.technicalResult;
       setEvaluation({ ...evaluation, comparisons: updatedComparisons });
-      alert('Notas salvas e índice de superioridade recalculado com sucesso!');
+      alert('Notas do participante salvas. A média da equipe foi recalculada.');
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar notas');
     } finally {
       setSaving(false);
     }
   };
+
+  const participantProgress = (participantId: string) => {
+    const participantResponses = Object.values(scoresMap[participantId] || {}).flatMap(Object.values);
+    const total = participantResponses.length;
+    const completed = participantResponses.filter(value => value.na || (value.libus !== null && value.comp !== null)).length;
+    return total > 0 ? Math.round((completed / total) * 100) : 0;
+  };
+
+  const teamResponseCount = activeComparison
+    ? new Set((activeComparison.responses || []).map((response: any) => response.participantId).filter(Boolean)).size
+    : 0;
 
   const handleSaveEconomic = async () => {
     if (!activeComparison) return;
@@ -469,6 +512,51 @@ export const EvaluationExecutionPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Participante ativo: cada pessoa responde todos os critérios */}
+      {evaluation.participants?.length > 0 && (
+        <section className="bg-white rounded-2xl border border-slate-200/90 p-4 shadow-xs space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-wider text-libus-magenta">Avaliação individual da equipe</p>
+              <h3 className="text-sm font-black text-slate-900">Selecione quem está respondendo</h3>
+              <p className="text-[11px] text-slate-500">Cada participante avalia todos os critérios. O laudo oficial usará a média das notas válidas.</p>
+            </div>
+            <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-1 rounded-lg">
+              {teamResponseCount} participante(s) já responderam
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {evaluation.participants.map((participant: any) => {
+              const progress = participantProgress(participant.id);
+              const active = activeParticipantId === participant.id;
+              return (
+                <button
+                  key={participant.id}
+                  type="button"
+                  onClick={() => setActiveParticipantId(participant.id)}
+                  className={`min-w-[180px] text-left px-3 py-2 rounded-xl border transition ${
+                    active
+                      ? 'border-libus-magenta bg-pink-50 ring-2 ring-pink-200'
+                      : 'border-slate-200 bg-slate-50 hover:bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-bold text-slate-900 truncate">{participant.name}</span>
+                    <span className={`text-[10px] font-mono font-bold ${progress === 100 ? 'text-emerald-600' : 'text-slate-500'}`}>
+                      {progress}%
+                    </span>
+                  </div>
+                  <span className="block text-[10px] text-slate-500 truncate">{participant.roleOrArea}</span>
+                  <div className="h-1 mt-1.5 rounded-full bg-slate-200 overflow-hidden">
+                    <div className="h-full bg-libus-magenta transition-all" style={{ width: `${progress}%` }} />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Seletores de Pares 1x1 em Ficha Técnica */}
       <div className="flex items-center gap-3 overflow-x-auto pb-2">
         {evaluation.comparisons?.map((comp: any, idx: number) => {
@@ -654,8 +742,8 @@ export const EvaluationExecutionPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {activeComparison?.responses?.map((r: any) => {
-                    const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
+                  {activeResponses.map((r: any) => {
+                    const state = activeParticipantScores[r.attributeId] || { libus: null, comp: null, na: false };
                     const isNA = state.na;
                     const lScore = state.libus;
                     const cScore = state.comp;
@@ -743,8 +831,8 @@ export const EvaluationExecutionPage: React.FC = () => {
 
             {/* Visão Mobile Touch Cards (md:hidden) com Pílulas Táteis 1-10 */}
             <div className="md:hidden divide-y divide-slate-100">
-              {activeComparison?.responses?.map((r: any) => {
-                const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
+              {activeResponses.map((r: any) => {
+                const state = activeParticipantScores[r.attributeId] || { libus: null, comp: null, na: false };
                 const isNA = state.na;
                 const lScore = state.libus;
                 const cScore = state.comp;
