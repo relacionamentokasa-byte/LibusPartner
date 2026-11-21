@@ -31,7 +31,7 @@ export const DashboardPage: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const data = await apiRequest('/evaluations');
+      const data = await apiRequest('/evaluations?summary=true');
       setEvaluations(data.evaluations || []);
     } catch (err) {
       console.error(err);
@@ -67,8 +67,8 @@ export const DashboardPage: React.FC = () => {
   };
 
   const totalEvaluations = evaluations.length;
-  const completedEvaluations = evaluations.filter(e => e.status === 'COMPLETED').length;
-  const inProgressEvaluations = evaluations.filter(e => e.status === 'IN_PROGRESS').length;
+  const completedEvaluations = evaluations.filter(e => e.signatureStatus?.allSigned ?? e.status === 'COMPLETED').length;
+  const inProgressEvaluations = evaluations.filter(e => !(e.signatureStatus?.allSigned ?? e.status === 'COMPLETED')).length;
   const conversionRate = totalEvaluations > 0 ? Math.round((completedEvaluations / totalEvaluations) * 100) : 0;
 
   // Cálculo consolidado de indicadores operacionais e SESMT
@@ -275,7 +275,7 @@ export const DashboardPage: React.FC = () => {
                       <h4 className="font-bold text-slate-900 text-sm">{ev.company?.tradeName}</h4>
                       <p className="text-[11px] text-slate-400 font-mono mt-0.5">{ev.company?.cnpj || (t.all === 'Todas' ? 'CNPJ não informado' : 'ID fiscal no informado')}</p>
                     </div>
-                    {ev.status === 'COMPLETED' ? (
+                    {(ev.signatureStatus?.allSigned ?? ev.status === 'COMPLETED') ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 text-[10px] font-bold font-mono border border-emerald-200 flex-shrink-0">
                         <CheckCircle2 size={11} className="text-emerald-600" />
                         {t.dashStatusCompleted}
@@ -308,7 +308,7 @@ export const DashboardPage: React.FC = () => {
                         className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition font-mono"
                       >
                         <ShieldCheck size={12} />
-                        <span>PDF</span>
+                        <span>Laudos</span>
                       </Link>
                       <Link
                         to={`/evaluations/${ev.id}`}
@@ -368,17 +368,22 @@ export const DashboardPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {ev.status === 'COMPLETED' ? (
-                          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 font-mono">
-                            <CheckCircle2 size={13} className="text-emerald-600" />
-                            <span>Homologada</span>
-                          </div>
-                        ) : (
-                          <div className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 font-mono">
-                            <Clock size={13} className="text-slate-400" />
-                            <span>Em Campo</span>
-                          </div>
-                        )}
+                        {(() => {
+                          const totalSigners = ev.participants?.length || 0;
+                          const signedSigners = ev.participantSignatures?.length || (ev.clientSignature ? 1 : 0);
+                          const allSigned = ev.signatureStatus?.allSigned ?? (totalSigners === 0 ? ev.status === 'COMPLETED' : signedSigners >= totalSigners);
+                          return allSigned ? (
+                            <div className="inline-flex flex-col items-start gap-0.5 text-xs font-bold text-emerald-700 font-mono">
+                              <span className="inline-flex items-center gap-1.5"><CheckCircle2 size={13} className="text-emerald-600" />Homologada</span>
+                              {totalSigners > 0 && <span className="text-[9px] text-emerald-600">{signedSigners}/{totalSigners} responsáveis</span>}
+                            </div>
+                          ) : (
+                            <div className="inline-flex flex-col items-start gap-0.5 text-xs font-semibold text-slate-700 font-mono">
+                              <span className="inline-flex items-center gap-1.5"><Clock size={13} className="text-slate-400" />Em Campo</span>
+                              {totalSigners > 0 && <span className="text-[9px] text-amber-700">{signedSigners}/{totalSigners} assinados</span>}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-6 py-4 text-slate-500 font-mono text-[11px]">
                         {new Date(ev.createdAt).toLocaleDateString('pt-BR')}
@@ -388,10 +393,10 @@ export const DashboardPage: React.FC = () => {
                           <Link
                             to={`/evaluations/${ev.id}/report`}
                             className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition font-mono"
-                            title="Ver Laudo em PDF"
+                            title="Ver laudos individuais"
                           >
                             <ShieldCheck size={13} />
-                            <span>PDF</span>
+                            <span>Laudos</span>
                           </Link>
                           <Link
                             to={`/evaluations/${ev.id}`}

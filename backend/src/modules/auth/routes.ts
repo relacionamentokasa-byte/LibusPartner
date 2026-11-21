@@ -66,7 +66,39 @@ authRouter.post('/login', async (req: Request, res: Response) => {
 });
 
 authRouter.get('/me', authMiddleware, async (req: Request, res: Response) => {
-  return res.json({ user: req.user });
+  const user = await prisma.user.findUnique({
+    where: { id: req.user!.id },
+    select: { id: true, name: true, email: true, role: true, mustChangePassword: true, signatureImage: true }
+  });
+  return res.json({ user });
+});
+
+const signatureSchema = z.object({
+  signatureImage: z.string().startsWith('data:image/', 'Envie uma imagem de assinatura válida').max(2_000_000, 'A assinatura deve ter no máximo 2 MB')
+});
+
+authRouter.patch('/signature', authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const { signatureImage } = signatureSchema.parse(req.body);
+    const user = await prisma.user.update({
+      where: { id: req.user!.id },
+      data: { signatureImage },
+      select: { id: true, name: true, email: true, role: true, mustChangePassword: true, signatureImage: true }
+    });
+    return res.json({ success: true, user });
+  } catch (err: any) {
+    if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors[0].message });
+    return res.status(500).json({ error: 'Erro ao salvar assinatura padrão' });
+  }
+});
+
+authRouter.delete('/signature', authMiddleware, async (req: Request, res: Response) => {
+  const user = await prisma.user.update({
+    where: { id: req.user!.id },
+    data: { signatureImage: null },
+    select: { id: true, name: true, email: true, role: true, mustChangePassword: true, signatureImage: true }
+  });
+  return res.json({ success: true, user });
 });
 
 // Solicitação de Recuperação de Senha (Esqueceu a senha)

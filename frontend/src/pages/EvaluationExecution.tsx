@@ -31,6 +31,7 @@ import { getCaConsultUrl } from '../utils/caHelper';
 import { ExternalLink } from 'lucide-react';
 import { HomologationSignatureModal } from '../components/HomologationSignatureModal';
 import { useLanguage } from '../context/LanguageContext';
+import { useAuth } from '../context/AuthContext';
 
 export const EvaluationExecutionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -61,8 +62,24 @@ export const EvaluationExecutionPage: React.FC = () => {
     phone?: string;
   }>>([]);
 
-  // Estados locais das notas por comparação
-  const [scoresMap, setScoresMap] = useState<Record<string, Record<string, { libus: number | null; comp: number | null; na: boolean }>>>({});
+  // Estados locais das notas por participante e comparativo
+  const [activeParticipantByComparison, setActiveParticipantByComparison] = useState<Record<string, string>>({});
+  const [scoresMap, setScoresMap] = useState<Record<string, Record<string, Record<string, { libus: number | null; comp: number | null; na: boolean }>>>>({});
+
+  const activeComparison = evaluation?.comparisons?.[activeComparisonIndex];
+  const activeParticipantId = activeComparison ? activeParticipantByComparison[activeComparison.id] : undefined;
+  const activeParticipant = evaluation?.participants?.find((participant: any) => participant.id === activeParticipantId);
+  const activeParticipantScores = activeComparison && activeParticipantId
+    ? scoresMap[activeComparison.id]?.[activeParticipantId] || {}
+    : {};
+
+  const activeResponses = activeComparison?.responses
+    ?.filter((response: any, index: number, responses: any[]) => responses.findIndex(item => item.attributeId === response.attributeId) === index) || [];
+  const activeCompletedCriteria = activeResponses.filter((response: any) => {
+    const score = activeParticipantScores[response.attributeId];
+    return score?.na || (score?.libus !== null && score?.libus !== undefined && score?.comp !== null && score?.comp !== undefined);
+  }).length;
+  const activeProgress = activeResponses.length > 0 ? Math.round((activeCompletedCriteria / activeResponses.length) * 100) : 0;
 
   // Estados locais econômicos
   const [economicInputs, setEconomicInputs] = useState<Record<string, {
@@ -85,14 +102,18 @@ export const EvaluationExecutionPage: React.FC = () => {
         const initialEconomic: any = {};
 
         data.evaluation.comparisons.forEach((comp: any) => {
-          initialScores[comp.id] = {};
           comp.responses.forEach((r: any) => {
-            initialScores[comp.id][r.attributeId] = {
+            const participantId = r.participantId;
+            if (!participantId) return;
+            initialScores[comp.id] = initialScores[comp.id] || {};
+            initialScores[comp.id][participantId] = initialScores[comp.id][participantId] || {};
+            initialScores[comp.id][participantId][r.attributeId] = {
               libus: r.libusScore,
               comp: r.competitorScore,
               na: r.isNotApplicable
             };
           });
+
 
           if (comp.economicResult) {
             initialEconomic[comp.id] = {
@@ -128,50 +149,56 @@ export const EvaluationExecutionPage: React.FC = () => {
     loadEvaluation();
   }, [id]);
 
-  const activeComparison = evaluation?.comparisons?.[activeComparisonIndex];
+  const handleSelectParticipant = (participantId: string) => {
+    if (!activeComparison) return;
+    setActiveParticipantByComparison(current => ({ ...current, [activeComparison.id]: participantId }));
+  };
 
   const handleScoreChange = (attributeId: string, type: 'libus' | 'comp', value: number) => {
-    if (!activeComparison) return;
+    if (!activeComparison || !activeParticipantId) return;
     const compId = activeComparison.id;
-    const current = scoresMap[compId]?.[attributeId] || { libus: null, comp: null, na: false };
+    const current = activeParticipantScores[attributeId] || { libus: null, comp: null, na: false };
 
-    setScoresMap({
-      ...scoresMap,
+    setScoresMap(currentScores => ({
+      ...currentScores,
       [compId]: {
-        ...scoresMap[compId],
-        [attributeId]: {
-          ...current,
-          [type]: value,
-          na: false
+        ...currentScores[compId],
+        [activeParticipantId]: {
+          ...currentScores[compId]?.[activeParticipantId],
+          [attributeId]: { ...current, [type]: value, na: false }
         }
       }
-    });
+    }));
   };
 
   const handleToggleNA = (attributeId: string) => {
-    if (!activeComparison) return;
+    if (!activeComparison || !activeParticipantId) return;
     const compId = activeComparison.id;
-    const current = scoresMap[compId]?.[attributeId] || { libus: null, comp: null, na: false };
+    const current = activeParticipantScores[attributeId] || { libus: null, comp: null, na: false };
 
-    setScoresMap({
-      ...scoresMap,
+    setScoresMap(currentScores => ({
+      ...currentScores,
       [compId]: {
-        ...scoresMap[compId],
-        [attributeId]: {
-          ...current,
-          na: !current.na
+        ...currentScores[compId],
+        [activeParticipantId]: {
+          ...currentScores[compId]?.[activeParticipantId],
+          [attributeId]: { ...current, na: !current.na }
         }
       }
-    });
+    }));
   };
 
   const handleSaveScores = async () => {
-    if (!activeComparison) return;
+    if (!activeComparison || !activeParticipantId) {
+      alert('Selecione quem está respondendo antes de salvar as notas.');
+      return;
+    }
     setSaving(true);
     try {
       const compId = activeComparison.id;
-      const responsesPayload = Object.entries(scoresMap[compId] || {}).map(([attributeId, vals]) => ({
+      const responsesPayload = Object.entries(activeParticipantScores).map(([attributeId, vals]) => ({
         attributeId,
+        participantId: activeParticipantId,
         libusScore: vals.na ? null : vals.libus,
         competitorScore: vals.na ? null : vals.comp,
         isNotApplicable: vals.na
@@ -179,13 +206,20 @@ export const EvaluationExecutionPage: React.FC = () => {
 
       const res = await apiRequest(`/evaluations/comparisons/${compId}/scores`, {
         method: 'PUT',
-        body: JSON.stringify({ responses: responsesPayload })
+        body: JSON.stringify({ participantId: activeParticipantId, responses: responsesPayload })
       });
 
       const updatedComparisons = [...evaluation.comparisons];
-      updatedComparisons[activeComparisonIndex].technicalResult = res.technicalResult;
+      updatedComparisons[activeComparisonIndex] = {
+        ...updatedComparisons[activeComparisonIndex],
+        technicalResult: res.technicalResult,
+        responses: [
+          ...updatedComparisons[activeComparisonIndex].responses.filter((response: any) => response.participantId !== activeParticipantId),
+          ...responsesPayload.map(response => ({ ...response, id: `${compId}-${activeParticipantId}-${response.attributeId}` }))
+        ]
+      };
       setEvaluation({ ...evaluation, comparisons: updatedComparisons });
-      alert('Notas salvas e índice de superioridade recalculado com sucesso!');
+      alert(`Notas de ${activeParticipant?.name || 'participante'} salvas e índice recalculado com sucesso!`);
     } catch (err: any) {
       alert(err.message || 'Erro ao salvar notas');
     } finally {
@@ -335,7 +369,7 @@ export const EvaluationExecutionPage: React.FC = () => {
             <h1 className="text-xl md:text-2xl font-black text-slate-900 tracking-tight">
               {evaluation.company?.tradeName}
             </h1>
-            {evaluation.status === 'COMPLETED' ? (
+            {(evaluation.signatureStatus?.allSigned ?? evaluation.status === 'COMPLETED') ? (
               <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 font-mono">
                 <CheckCircle2 size={13} className="text-emerald-600" />
                 <span>Homologada</span>
@@ -613,15 +647,60 @@ export const EvaluationExecutionPage: React.FC = () => {
             </div>
             <button
               onClick={handleSaveScores}
-              disabled={saving}
+              disabled={saving || !activeParticipantId}
               className="px-5 py-2.5 bg-gradient-to-r from-libus-magenta to-libus-magentaHover hover:brightness-105 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-pink-500/20 flex items-center justify-center gap-2 transition flex-shrink-0 uppercase tracking-wider font-mono"
             >
               <Save size={14} /> {saving ? 'Processando...' : 'Salvar & Recalcular'}
             </button>
           </div>
 
+          {/* Respondente ativo do comparativo */}
+          <div className="bg-white rounded-2xl border-2 border-pink-200 p-4 sm:p-5 shadow-xs space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-libus-magenta">Quem está respondendo este comparativo?</p>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {activeParticipant ? `Notas serão registradas para ${activeParticipant.name} • ${activeParticipant.roleOrArea}` : 'Selecione um integrante da equipe para habilitar os critérios.'}
+                </p>
+              </div>
+              {activeParticipant && (
+                <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                  {activeCompletedCriteria}/{activeResponses.length} critérios • {activeProgress}%
+                </span>
+              )}
+            </div>
+            {evaluation.participants?.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {evaluation.participants.map((participant: any) => {
+                  const participantScores = scoresMap[activeComparison?.id || '']?.[participant.id] || {};
+                  const completed = activeResponses.filter((response: any) => {
+                    const score = participantScores[response.attributeId];
+                    return score?.na || (score?.libus !== null && score?.libus !== undefined && score?.comp !== null && score?.comp !== undefined);
+                  }).length;
+                  const selected = activeParticipantId === participant.id;
+                  return (
+                    <button
+                      key={participant.id}
+                      type="button"
+                      onClick={() => handleSelectParticipant(participant.id)}
+                      className={`px-3 py-2 rounded-xl border text-left transition min-w-[150px] ${selected ? 'bg-pink-50 border-libus-magenta text-libus-magenta ring-2 ring-pink-200' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-pink-300'}`}
+                    >
+                      <span className="block text-xs font-black">{participant.name}</span>
+                      <span className="block text-[10px] font-mono text-slate-500 mt-0.5">{participant.roleOrArea}</span>
+                      <span className={`block text-[10px] font-mono font-bold mt-1 ${completed === activeResponses.length && activeResponses.length > 0 ? 'text-emerald-700' : 'text-slate-500'}`}>
+                        {completed}/{activeResponses.length} critérios respondidos
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">Cadastre pelo menos um participante antes de preencher este questionário.</div>
+            )}
+          </div>
+
           {/* Ficha de Critérios - Desktop Table & Mobile Touch Cards */}
-          <div className="bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs">
+          <div className={`bg-white rounded-2xl border border-slate-200/90 overflow-hidden shadow-xs ${!activeParticipantId ? 'opacity-60' : ''}`}>
             {/* Visão Tabela Desktop (md:block) */}
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs">
@@ -654,8 +733,8 @@ export const EvaluationExecutionPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-700">
-                  {activeComparison?.responses?.map((r: any) => {
-                    const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
+                  {activeResponses.map((r: any) => {
+                    const state = activeParticipantScores[r.attributeId] || { libus: null, comp: null, na: false };
                     const isNA = state.na;
                     const lScore = state.libus;
                     const cScore = state.comp;
@@ -692,7 +771,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                         {/* Seletor Libus */}
                         <td className="px-6 py-3 text-center bg-pink-50/30 border-l border-r border-slate-100">
                           <select
-                            disabled={isNA}
+                            disabled={!activeParticipantId || isNA}
                             value={state.libus ?? ''}
                             onChange={(e) => handleScoreChange(r.attributeId, 'libus', Number(e.target.value))}
                             className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-libus-magenta focus:ring-2 focus:ring-pink-400 focus:border-pink-400 shadow-xs cursor-pointer"
@@ -707,7 +786,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                         {/* Seletor Concorrente */}
                         <td className="px-6 py-3 text-center bg-slate-50/80 border-r border-slate-100">
                           <select
-                            disabled={isNA}
+                            disabled={!activeParticipantId || isNA}
                             value={state.comp ?? ''}
                             onChange={(e) => handleScoreChange(r.attributeId, 'comp', Number(e.target.value))}
                             className="px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs font-black text-slate-800 focus:ring-2 focus:ring-slate-400 focus:border-slate-400 shadow-xs cursor-pointer"
@@ -727,6 +806,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                               <input
                                 type="checkbox"
                                 checked={isNA}
+                                disabled={!activeParticipantId}
                                 onChange={() => handleToggleNA(r.attributeId)}
                                 className="rounded border-slate-300 text-libus-magenta focus:ring-pink-400"
                               />
@@ -743,8 +823,8 @@ export const EvaluationExecutionPage: React.FC = () => {
 
             {/* Visão Mobile Touch Cards (md:hidden) com Pílulas Táteis 1-10 */}
             <div className="md:hidden divide-y divide-slate-100">
-              {activeComparison?.responses?.map((r: any) => {
-                const state = scoresMap[activeComparison.id]?.[r.attributeId] || { libus: null, comp: null, na: false };
+              {activeResponses.map((r: any) => {
+                const state = activeParticipantScores[r.attributeId] || { libus: null, comp: null, na: false };
                 const isNA = state.na;
                 const lScore = state.libus;
                 const cScore = state.comp;
@@ -813,6 +893,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                                 <button
                                   key={n}
                                   type="button"
+                                  disabled={!activeParticipantId}
                                   onClick={() => handleScoreChange(r.attributeId, 'libus', n)}
                                   className={`py-1.5 text-xs font-black rounded-lg transition active:scale-90 font-mono flex items-center justify-center ${
                                     isSelected
@@ -846,6 +927,7 @@ export const EvaluationExecutionPage: React.FC = () => {
                                 <button
                                   key={n}
                                   type="button"
+                                  disabled={!activeParticipantId}
                                   onClick={() => handleScoreChange(r.attributeId, 'comp', n)}
                                   className={`py-1.5 text-xs font-black rounded-lg transition active:scale-90 font-mono flex items-center justify-center ${
                                     isSelected
@@ -1141,7 +1223,7 @@ export const EvaluationExecutionPage: React.FC = () => {
 
             <button
               onClick={handleSaveEconomic}
-              disabled={saving}
+              disabled={saving || !activeParticipantId}
               className="px-6 py-3 bg-gradient-to-r from-libus-magenta to-libus-magentaHover hover:brightness-105 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-pink-500/20 flex items-center justify-center gap-2 transition uppercase tracking-wider font-mono"
             >
               <Save size={14} /> {t.tcoCalculateBtn}
@@ -1310,15 +1392,17 @@ export const EvaluationExecutionPage: React.FC = () => {
         onClose={() => setShowCompleteModal(false)}
         evaluationId={evaluation.id}
         companyName={evaluation.company?.tradeName || 'Cliente'}
-        defaultTechnicianName={evaluation.leadTechnician?.name || ''}
+        defaultTechnicianName={evaluation.technicianSignerName || evaluation.leadTechnician?.name || ''}
+        defaultTechnicianSignature={evaluation.technicianSignature || ''}
         participants={evaluation.participants || []}
+        participantSignatures={evaluation.participantSignatures || []}
         onSuccess={(updatedEval) => {
           setEvaluation({
             ...evaluation,
             ...updatedEval,
-            status: 'COMPLETED'
+            status: updatedEval?.status || evaluation.status
           });
-          alert('Laudo técnico assinado e homologado com sucesso!');
+          alert(updatedEval?.status === 'COMPLETED' ? 'Laudo técnico assinado e homologado com sucesso!' : 'Assinatura salva. Ainda há responsáveis pendentes.');
         }}
       />
 
@@ -1518,7 +1602,7 @@ export const EvaluationExecutionPage: React.FC = () => {
           </div>
           <button
             onClick={handleSaveScores}
-            disabled={saving}
+            disabled={saving || !activeParticipantId}
             className="px-4 py-2.5 bg-libus-magenta hover:bg-libus-magentaHover text-white font-bold rounded-xl text-xs shadow-md flex items-center justify-center gap-1.5 transition flex-shrink-0 uppercase tracking-wider font-mono active:scale-95 disabled:opacity-50"
           >
             <Save size={14} />

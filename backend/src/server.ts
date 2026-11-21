@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import dotenv from 'dotenv';
 import { authRouter } from './modules/auth/routes.js';
 import { alvesAuthRouter } from './modules/alvesAuth/routes.js';
@@ -34,6 +35,14 @@ app.use('/api/public', publicAlvesRouter);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', name: 'Libus Partner API', version: '1.0.0' });
+});
+
+// Em produção, o mesmo serviço Render pode servir API e frontend.
+const frontendDist = path.resolve(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDist));
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  return res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
 app.listen(PORT, () => {

@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { SignaturePad } from '../components/SignaturePad';
 import { useAuth } from '../context/AuthContext';
 import { apiRequest } from '../services/api';
 import {
@@ -15,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const ProfilePage: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -23,6 +24,10 @@ export const ProfilePage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [signatureSaving, setSignatureSaving] = useState(false);
+  const [signatureMessage, setSignatureMessage] = useState('');
+  const [signatureError, setSignatureError] = useState('');
+  const signatureFileInput = useRef<HTMLInputElement | null>(null);
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +58,50 @@ export const ProfilePage: React.FC = () => {
       setError(err.message || 'Erro ao atualizar senha');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveSignature = async (signatureImage: string) => {
+    setSignatureError('');
+    setSignatureMessage('');
+    if (!signatureImage) return;
+    try {
+      setSignatureSaving(true);
+      const data = await apiRequest('/auth/signature', {
+        method: 'PATCH',
+        body: JSON.stringify({ signatureImage })
+      });
+      updateUser(data.user);
+      setSignatureMessage('Assinatura padrão salva. Ela será carregada automaticamente nos novos laudos.');
+    } catch (err: any) {
+      setSignatureError(err.message || 'Erro ao salvar assinatura padrão');
+    } finally {
+      setSignatureSaving(false);
+    }
+  };
+
+  const handleSignatureFile = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setSignatureError('Selecione um arquivo de imagem válido.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => saveSignature(String(reader.result));
+    reader.readAsDataURL(file);
+  };
+
+  const removeSignature = async () => {
+    try {
+      setSignatureSaving(true);
+      const data = await apiRequest('/auth/signature', { method: 'DELETE' });
+      updateUser(data.user);
+      setSignatureMessage('Assinatura padrão removida.');
+    } catch (err: any) {
+      setSignatureError(err.message || 'Erro ao remover assinatura padrão');
+    } finally {
+      setSignatureSaving(false);
     }
   };
 
@@ -234,6 +283,27 @@ export const ProfilePage: React.FC = () => {
                 </button>
               </div>
             </form>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-slate-200/90 shadow-xs mt-6">
+            <div className="flex items-center gap-2.5 text-slate-900 pb-4 border-b border-slate-100 mb-5">
+              <div className="p-2 rounded-xl bg-pink-50 text-libus-magenta border border-pink-100"><UserCheck size={18} /></div>
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-wider font-mono">Assinatura Padrão da Libus</h2>
+                <p className="text-xs text-slate-500">Anexe uma assinatura para carregá-la automaticamente nos novos laudos.</p>
+              </div>
+            </div>
+            {signatureError && <div className="mb-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">{signatureError}</div>}
+            {signatureMessage && <div className="mb-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs">{signatureMessage}</div>}
+            {user?.signatureImage ? (
+              <div className="space-y-4">
+                <div className="h-32 rounded-xl border border-dashed border-slate-300 bg-slate-50 flex items-center justify-center p-4"><img src={user.signatureImage} alt="Assinatura padrão" className="max-h-24 max-w-full object-contain mix-blend-multiply" /></div>
+                <div className="flex flex-wrap gap-2 justify-end"><button type="button" onClick={() => signatureFileInput.current?.click()} disabled={signatureSaving} className="px-4 py-2 bg-libus-magenta text-white rounded-xl text-xs font-bold">Substituir assinatura</button><button type="button" onClick={removeSignature} disabled={signatureSaving} className="px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-xs font-bold">Remover</button></div>
+              </div>
+            ) : (
+              <div className="space-y-3"><SignaturePad label="Assine ou carregue sua assinatura padrão" subLabel="Você poderá substituir esta assinatura manualmente em cada laudo." onSignatureChange={saveSignature} /><button type="button" onClick={() => signatureFileInput.current?.click()} className="w-full px-4 py-2.5 border border-pink-200 text-libus-magenta rounded-xl text-xs font-bold">Anexar imagem da assinatura</button></div>
+            )}
+            <input ref={signatureFileInput} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleSignatureFile} className="hidden" />
           </div>
         </div>
       </div>

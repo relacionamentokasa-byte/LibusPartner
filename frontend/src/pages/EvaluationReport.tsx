@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { apiRequest } from '../services/api';
 import { LibusLogo } from '../components/LibusLogo';
 import { getManufacturerLogo } from '../utils/manufacturerLogos';
@@ -37,6 +37,8 @@ import { HomologationSignatureModal } from '../components/HomologationSignatureM
 export const EvaluationReportPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const requestedParticipantId = searchParams.get('participantId');
   const [evaluation, setEvaluation] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [zoomLevel, setZoomLevel] = useState<number>(100);
@@ -114,7 +116,40 @@ export const EvaluationReportPage: React.FC = () => {
     );
   }
 
-  const { company, leadTechnician, participants = [], comparisons = [], createdAt } = evaluation;
+  const { company, leadTechnician, participants = [], participantSignatures = [], signatureStatus, comparisons: rawComparisons = [], createdAt } = evaluation;
+  const selectedParticipant = participants.find((participant: any) => participant.id === requestedParticipantId) || (participants.length === 1 ? participants[0] : null);
+  const selectedParticipantId = selectedParticipant?.id;
+  const selectedParticipantSignature = participantSignatures.find((signature: any) => signature.participantId === selectedParticipantId);
+  const calculateIndividualTechnicalResult = (responses: any[]) => {
+    const valid = responses.filter(response => !response.isNotApplicable && response.libusScore != null && response.competitorScore != null);
+    const libusAverageScore = valid.length ? Number((valid.reduce((sum, response) => sum + Number(response.libusScore), 0) / valid.length).toFixed(1)) : 0;
+    const competitorAverageScore = valid.length ? Number((valid.reduce((sum, response) => sum + Number(response.competitorScore), 0) / valid.length).toFixed(1)) : 0;
+    const libusSuperiorCount = valid.filter(response => response.libusScore > response.competitorScore).length;
+    return {
+      totalCriteria: responses.length,
+      validCriteria: valid.length,
+      libusAverageScore,
+      competitorAverageScore,
+      libusSuperiorCount,
+      libusSuperiorityPercent: valid.length ? Number(((libusSuperiorCount / valid.length) * 100).toFixed(1)) : 0
+    };
+  };
+  const reportComparisons = rawComparisons.map((comparison: any) => {
+    const participantResponses = selectedParticipantId
+      ? comparison.responses?.filter((response: any) => response.participantId === selectedParticipantId)
+      : comparison.responses;
+    const technicalResult = selectedParticipantId
+      ? calculateIndividualTechnicalResult(participantResponses || [])
+      : comparison.technicalResult;
+    return { ...comparison, responses: participantResponses || [], technicalResult };
+  });
+  const reportParticipants = selectedParticipant ? [selectedParticipant] : participants;
+  const reportParticipantLabel = selectedParticipant ? `${selectedParticipant.name} • ${selectedParticipant.roleOrArea}` : 'Resumo consolidado da equipe';
+  const hasPendingSignatures = selectedParticipantId
+    ? !selectedParticipantSignature?.signature || !evaluation.technicianSignature
+    : signatureStatus ? !signatureStatus.allSigned : !evaluation.signedAt;
+  const signedParticipants = signatureStatus?.signedParticipants ?? participantSignatures.length;
+  const totalParticipants = signatureStatus?.totalParticipants ?? participants.length;
 
   // Cálculos consolidados gerais do Laudo
   let totalEconomicSavings = 0;
@@ -128,7 +163,7 @@ export const EvaluationReportPage: React.FC = () => {
   let libusWinsCount = 0;
   let tiesCount = 0;
 
-  comparisons.forEach((comp: any) => {
+  reportComparisons.forEach((comp: any) => {
     if (comp.economicResult) {
       const eco = comp.economicResult;
       totalEconomicSavings += eco.totalAnnualSavings || eco.economyGenerated || 0;
@@ -184,6 +219,9 @@ export const EvaluationReportPage: React.FC = () => {
             <h1 className="text-base font-black text-slate-900 leading-snug tracking-tight">
               Laudo Técnico de Homologação: {company?.tradeName}
             </h1>
+            <p className="text-[11px] font-mono font-bold text-libus-magenta mt-1">
+              {selectedParticipant ? `LAUDO INDIVIDUAL DE: ${reportParticipantLabel}` : 'RESUMO CONSOLIDADO DA EQUIPE'}
+            </p>
           </div>
         </div>
 
@@ -238,8 +276,32 @@ export const EvaluationReportPage: React.FC = () => {
         </div>
       </div>
 
+      {/* Seletor de laudo individual por participante */}
+      {participants.length > 1 && (
+        <div className="no-print bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-mono font-bold uppercase tracking-widest text-slate-500">Escolha o laudo para assinatura</p>
+              <p className="text-xs text-slate-500 mt-0.5">Cada responsável possui seu próprio laudo individual e Sumário Executivo.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {participants.map((participant: any) => (
+                <Link
+                  key={participant.id}
+                  to={`/evaluations/${id}/report?participantId=${participant.id}`}
+                  className={`px-3 py-2 rounded-xl border text-left transition ${selectedParticipantId === participant.id ? 'bg-pink-50 border-libus-magenta text-libus-magenta' : 'bg-slate-50 border-slate-200 text-slate-700 hover:border-pink-300'}`}
+                >
+                  <span className="block text-xs font-black">{participant.name}</span>
+                  <span className="block text-[10px] font-mono text-slate-500">{participant.roleOrArea}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Banner de Homologação / Assinatura Digital Pendente (Oculto na Impressão) */}
-      {!evaluation.signedAt && (
+      {hasPendingSignatures && (
         <div className="no-print bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 flex-shrink-0">
@@ -250,7 +312,9 @@ export const EvaluationReportPage: React.FC = () => {
                 Assinaturas Digitais Pendentes
               </h4>
               <p className="text-xs text-amber-700 mt-0.5">
-                Este laudo ainda não possui as assinaturas manuscritas na tela do Especialista Libus e do Responsável pelo Cliente (SESMT).
+                {totalParticipants > 0
+                  ? `${signedParticipants}/${totalParticipants} responsáveis assinaram. Todas as assinaturas obrigatórias, incluindo a do Especialista Libus, são necessárias para homologar.`
+                  : 'Este laudo ainda não possui todas as assinaturas manuscritas obrigatórias na tela.'}
               </p>
             </div>
           </div>
@@ -345,21 +409,11 @@ export const EvaluationReportPage: React.FC = () => {
                   <span className="text-[8px] text-slate-500 block">{leadTechnician?.email}</span>
                 </div>
 
-                {participants.length > 0 && (
-                  <div>
-                    <span className="text-slate-400 block text-[8px]">Participantes SESMT:</span>
-                    <div className="flex flex-wrap gap-1 mt-0.5">
-                      {participants.map((p: any) => (
-                        <span
-                          key={p.id}
-                          className="inline-block px-1.5 py-0.2 rounded bg-white border border-slate-200 text-[8px] font-semibold text-slate-700"
-                        >
-                          {p.name} {p.department ? `(${p.department})` : ''}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <div>
+                  <span className="text-slate-400 block text-[8px]">Responsável deste laudo:</span>
+                  <span className="font-bold text-slate-900">{selectedParticipant?.name || 'Resumo consolidado da equipe'}</span>
+                  {selectedParticipant && <span className="text-[8px] text-slate-500 block">{selectedParticipant.roleOrArea}</span>}
+                </div>
               </div>
             </div>
           </section>
@@ -373,9 +427,9 @@ export const EvaluationReportPage: React.FC = () => {
                   Sumário Executivo & Média Global da Empresa ({company?.tradeName || 'Cliente'})
                 </h2>
               </div>
-              {comparisons.length > 1 && (
+              {reportComparisons.length > 1 && (
                 <span className="text-[8px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold">
-                  PORTFÓLIO MULTI-ITEM ({comparisons.length} EPIs CONSOLIDADOS)
+                  PORTFÓLIO MULTI-ITEM ({reportComparisons.length} EPIs CONSOLIDADOS)
                 </span>
               )}
             </div>
@@ -383,7 +437,7 @@ export const EvaluationReportPage: React.FC = () => {
             <div className="grid grid-cols-4 gap-2 text-center divide-x divide-white/10">
               <div className="space-y-0.5">
                 <span className="text-[8px] uppercase tracking-wider text-slate-400">Pares Homologados</span>
-                <p className="text-sm font-bold text-white leading-tight">{comparisons.length}</p>
+                <p className="text-sm font-bold text-white leading-tight">{reportComparisons.length}</p>
                 <span className="text-[7.5px] text-slate-400 block">
                   {libusWinsCount} superados / {tiesCount} equivalentes
                 </span>
@@ -467,13 +521,13 @@ export const EvaluationReportPage: React.FC = () => {
             )}
 
             {/* Tabela Resumo Rápido da Matriz quando houver múltiplos EPIs */}
-            {comparisons.length > 1 && (
+            {reportComparisons.length > 1 && (
               <div className="mt-2 pt-2 border-t border-white/10 overflow-hidden text-[8.5px]">
                 <span className="text-[7.5px] uppercase tracking-wider text-slate-400 font-bold block mb-1">
-                  Matriz Sintética de Portfólio Avaliado ({comparisons.length} Postos / EPIs)
+                  Matriz Sintética de Portfólio Avaliado ({reportComparisons.length} Postos / EPIs)
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5 font-sans">
-                  {comparisons.map((c: any, i: number) => {
+                  {reportComparisons.map((c: any, i: number) => {
                     const lib = c.libusProduct;
                     const comp = c.competitorProduct;
                     const t = c.technicalResult;
@@ -521,7 +575,7 @@ export const EvaluationReportPage: React.FC = () => {
               </span>
             </div>
 
-            {comparisons.map((comp: any, idx: number) => {
+            {reportComparisons.map((comp: any, idx: number) => {
               const libus = comp.libusProduct;
               const competitor = comp.competitorProduct;
               const tech = comp.technicalResult;
@@ -839,48 +893,30 @@ export const EvaluationReportPage: React.FC = () => {
                 )}
               </div>
 
-              {/* Coluna Responsável do Cliente / SESMT */}
-              <div className="space-y-0.5 flex flex-col justify-end">
-                {evaluation.clientSignature ? (
-                  <div className="flex flex-col items-center">
-                    <div className="h-14 flex items-center justify-center">
-                      <img
-                        src={evaluation.clientSignature}
-                        alt="Assinatura Responsável Cliente"
-                        className="max-h-12 max-w-[180px] object-contain mix-blend-multiply"
-                      />
+              {/* Assinaturas individuais dos responsáveis do cliente / SESMT */}
+              <div className="space-y-1.5 flex flex-col justify-end">
+                <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500">Responsáveis do Cliente / SESMT</span>
+                {reportParticipants.length > 0 ? reportParticipants.map((participant: any) => {
+                  const signature = participantSignatures.find((item: any) => item.participantId === participant.id);
+                  return (
+                    <div key={participant.id} className="border-t border-slate-200 pt-1 text-center">
+                      {signature?.signature ? (
+                        <>
+                          <div className="h-10 flex items-center justify-center"><img src={signature.signature} alt={`Assinatura ${signature.signerName}`} className="max-h-9 max-w-[150px] object-contain mix-blend-multiply" /></div>
+                          <div className="border-b border-slate-700 w-3/4 mx-auto"></div>
+                          <p className="text-[8.5px] font-bold text-slate-900 mt-0.5">{signature.signerName}</p>
+                          <p className="text-[7px] text-slate-500 uppercase">{signature.signerRole} • {company?.tradeName}</p>
+                          {signature.signerDocument && <p className="text-[6.5px] text-slate-400 font-mono">Reg/Doc: {signature.signerDocument}</p>}
+                          <span className="text-[6.5px] text-emerald-700 font-mono flex items-center justify-center gap-0.5 mt-0.5"><CheckCircle2 size={8} className="text-emerald-600" /> Validado em {new Date(signature.signedAt).toLocaleDateString('pt-BR')}</span>
+                        </>
+                      ) : (
+                        <><p className="text-[8.5px] font-bold text-slate-900">{participant.name}</p><p className="text-[7px] text-slate-500 uppercase">{participant.roleOrArea} • {company?.tradeName}</p><span className="text-[6.5px] text-amber-700 font-mono block mt-0.5">Pendente de assinatura</span></>
+                      )}
                     </div>
-                    <div className="border-b border-slate-700 w-3/4 mx-auto"></div>
-                    <p className="text-[9.5px] font-bold text-slate-900 mt-0.5">
-                      {evaluation.clientSignerName || participants[0]?.name || 'Responsável Técnico / SESMT'}
-                    </p>
-                    <p className="text-[7.5px] text-slate-500 uppercase">
-                      {evaluation.clientSignerRole || 'Gestão de Segurança do Trabalho / Compras'} • {company?.tradeName}
-                    </p>
-                    {evaluation.clientSignerDocument && (
-                      <p className="text-[7px] text-slate-400 font-mono">
-                        Reg/Doc: {evaluation.clientSignerDocument}
-                      </p>
-                    )}
-                    {evaluation.signedAt && (
-                      <span className="text-[7px] text-emerald-700 font-mono flex items-center justify-center gap-0.5 mt-0.5">
-                        <CheckCircle2 size={8} className="text-emerald-600" />
-                        Validado em campo pelo SESMT
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div>
-                    <div className="border-b border-slate-400 w-3/4 mx-auto mb-1"></div>
-                    <p className="text-[9.5px] font-bold text-slate-900">
-                      {participants[0]?.name || 'Responsável Técnico / SESMT'}
-                    </p>
-                    <p className="text-[7.5px] text-slate-500 uppercase">
-                      Gestão de Segurança do Trabalho / Compras • {company?.tradeName}
-                    </p>
-                    <span className="text-[7px] text-slate-400 font-mono block mt-0.5">Pendente de assinatura na tela</span>
-                  </div>
-                )}
+                  );
+                }) : evaluation.clientSignature ? (
+                  <div className="text-center"><div className="h-10 flex items-center justify-center"><img src={evaluation.clientSignature} alt="Assinatura Responsável Cliente" className="max-h-9 max-w-[150px] object-contain mix-blend-multiply" /></div><div className="border-b border-slate-700 w-3/4 mx-auto"></div><p className="text-[8.5px] font-bold text-slate-900">{evaluation.clientSignerName}</p><p className="text-[7px] text-slate-500 uppercase">{evaluation.clientSignerRole} • {company?.tradeName}</p></div>
+                ) : <span className="text-[7px] text-slate-400 font-mono block text-center">Pendente de assinatura na tela</span>}
               </div>
             </div>
           </section>
@@ -901,12 +937,15 @@ export const EvaluationReportPage: React.FC = () => {
         evaluationId={evaluation.id}
         companyName={company?.tradeName || 'Cliente'}
         defaultTechnicianName={evaluation.technicianSignerName || leadTechnician?.name || ''}
-        participants={participants}
+        defaultTechnicianSignature={evaluation.technicianSignature || ''}
+        individualParticipantId={selectedParticipantId}
+        participants={selectedParticipant ? [selectedParticipant] : participants}
+        participantSignatures={selectedParticipantId ? participantSignatures.filter((signature: any) => signature.participantId === selectedParticipantId) : participantSignatures}
         onSuccess={(updatedEval) => {
           setEvaluation({
             ...evaluation,
             ...updatedEval,
-            status: 'COMPLETED'
+            status: updatedEval?.status || evaluation.status
           });
         }}
       />

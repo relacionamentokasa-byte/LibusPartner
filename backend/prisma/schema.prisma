@@ -8,48 +8,49 @@ generator client {
 }
 
 model User {
-  id                   String    @id @default(uuid())
+  id                   String       @id @default(uuid())
   name                 String
-  email                String    @unique
+  email                String       @unique
   passwordHash         String
-  role                 String    @default("TECNICO") // ADMIN, GESTOR, TECNICO
-  active               Boolean   @default(true)
-  mustChangePassword   Boolean   @default(false)
+  signatureImage       String?
+  role                 String       @default("TECNICO") // ADMIN, GESTOR, TECNICO
+  active               Boolean      @default(true)
+  mustChangePassword   Boolean      @default(false)
   superiorId           String?
-  superior             User?     @relation("UserHierarchy", fields: [superiorId], references: [id])
-  subordinates         User[]    @relation("UserHierarchy")
+  superior             User?        @relation("UserHierarchy", fields: [superiorId], references: [id])
+  subordinates         User[]       @relation("UserHierarchy")
   resetPasswordToken   String?
   resetPasswordExpires DateTime?
   evaluations          Evaluation[] @relation("TechnicianEvaluations")
   auditLogs            AuditLog[]
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
 
   @@map("users")
 }
 
 model Company {
-  id            String       @id @default(uuid())
-  tradeName     String       // Nome Fantasia
-  corporateName String?      // Razão Social
+  id            String  @id @default(uuid())
+  tradeName     String // Nome Fantasia
+  corporateName String? // Razão Social
   cnpj          String?
-  segment       String?      // Indústria, Construção, Mineração, etc.
+  segment       String? // Indústria, Construção, Mineração, etc.
   state         String?
   city          String?
   contactName   String?
   contactEmail  String?
   contactPhone  String?
-  active        Boolean      @default(true)
+  active        Boolean @default(true)
   createdById   String?
   updatedById   String?
 
   // Rastreabilidade e Integração Odoo ERP (res.partner)
-  odooPartnerId Int?         @unique
+  odooPartnerId Int?      @unique
   odooSyncedAt  DateTime?
 
-  evaluations   Evaluation[]
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  evaluations Evaluation[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@map("companies")
 }
@@ -69,7 +70,7 @@ model ProductCategory {
   id                 String               @id @default(uuid())
   familyId           String
   family             ProductFamily        @relation(fields: [familyId], references: [id])
-  name               String               // Capacetes, Óculos, Abafadores, etc.
+  name               String // Capacetes, Óculos, Abafadores, etc.
   slug               String
   libusProducts      LibusProduct[]
   competitorProducts CompetitorProduct[]
@@ -81,25 +82,25 @@ model ProductCategory {
 }
 
 model LibusProduct {
-  id             String                 @id @default(uuid())
-  categoryId     String
-  category       ProductCategory        @relation(fields: [categoryId], references: [id])
-  name           String
-  internalCode   String?
-  caNumber       String?
-  description    String?
-  imageUrl       String?
-  active         Boolean                @default(true)
+  id           String          @id @default(uuid())
+  categoryId   String
+  category     ProductCategory @relation(fields: [categoryId], references: [id])
+  name         String
+  internalCode String?
+  caNumber     String?
+  description  String?
+  imageUrl     String?
+  active       Boolean         @default(true)
 
   // Rastreabilidade e Integração Odoo ERP (product.product / product.template)
-  odooProductId  Int?                   @unique
+  odooProductId  Int?      @unique
   odooTemplateId Int?
   odooSyncedAt   DateTime?
 
-  equivalences   ProductEquivalence[]
+  equivalences    ProductEquivalence[]
   attributeValues ProductAttributeValue[]
-  evaluations    EvaluationComparison[]
-  createdAt      DateTime               @default(now())
+  evaluations     EvaluationComparison[]
+  createdAt       DateTime                @default(now())
 
   @@map("libus_products")
 }
@@ -115,20 +116,20 @@ model CompetitorManufacturer {
 }
 
 model CompetitorProduct {
-  id             String                 @id @default(uuid())
-  categoryId     String
-  category       ProductCategory        @relation(fields: [categoryId], references: [id])
-  manufacturerId String
-  manufacturer   CompetitorManufacturer @relation(fields: [manufacturerId], references: [id])
-  name           String
-  caNumber       String?
-  description    String?
-  imageUrl       String?
-  active         Boolean                @default(true)
-  equivalences   ProductEquivalence[]
+  id              String                  @id @default(uuid())
+  categoryId      String
+  category        ProductCategory         @relation(fields: [categoryId], references: [id])
+  manufacturerId  String
+  manufacturer    CompetitorManufacturer  @relation(fields: [manufacturerId], references: [id])
+  name            String
+  caNumber        String?
+  description     String?
+  imageUrl        String?
+  active          Boolean                 @default(true)
+  equivalences    ProductEquivalence[]
   attributeValues ProductAttributeValue[]
-  evaluations    EvaluationComparison[]
-  createdAt      DateTime               @default(now())
+  evaluations     EvaluationComparison[]
+  createdAt       DateTime                @default(now())
 
   @@map("competitor_products")
 }
@@ -148,69 +149,70 @@ model ProductEquivalence {
 }
 
 model TechnicalAttribute {
-  id          String                  @id @default(uuid())
-  categoryId  String
-  category    ProductCategory         @relation(fields: [categoryId], references: [id])
-  name        String
-  valueType   String                  @default("BOOLEAN") // BOOLEAN, NUMBER, TEXT
-  unit        String?
-  orderIndex  Int                     @default(0)
-  values      ProductAttributeValue[]
-  responses   EvaluationCriterionResponse[]
-  createdAt   DateTime                @default(now())
+  id         String                        @id @default(uuid())
+  categoryId String
+  category   ProductCategory               @relation(fields: [categoryId], references: [id])
+  name       String
+  valueType  String                        @default("BOOLEAN") // BOOLEAN, NUMBER, TEXT
+  unit       String?
+  orderIndex Int                           @default(0)
+  values     ProductAttributeValue[]
+  responses  EvaluationCriterionResponse[]
+  createdAt  DateTime                      @default(now())
 
   @@map("technical_attributes")
 }
 
 model ProductAttributeValue {
-  id                  String              @id @default(uuid())
+  id                  String             @id @default(uuid())
   attributeId         String
-  attribute           TechnicalAttribute  @relation(fields: [attributeId], references: [id])
+  attribute           TechnicalAttribute @relation(fields: [attributeId], references: [id])
   libusProductId      String?
-  libusProduct        LibusProduct?       @relation(fields: [libusProductId], references: [id])
+  libusProduct        LibusProduct?      @relation(fields: [libusProductId], references: [id])
   competitorProductId String?
-  competitorProduct   CompetitorProduct?  @relation(fields: [competitorProductId], references: [id])
+  competitorProduct   CompetitorProduct? @relation(fields: [competitorProductId], references: [id])
   value               String
-  createdAt           DateTime            @default(now())
+  createdAt           DateTime           @default(now())
 
   @@map("product_attribute_values")
 }
 
 model Evaluation {
-  id                   String                 @id @default(uuid())
+  id                   String   @id @default(uuid())
   companyId            String
-  company              Company                @relation(fields: [companyId], references: [id])
+  company              Company  @relation(fields: [companyId], references: [id])
   leadTechnicianId     String
-  leadTechnician       User                   @relation("TechnicianEvaluations", fields: [leadTechnicianId], references: [id])
-  status               String                 @default("DRAFT") // DRAFT, IN_PROGRESS, TECHNICAL_DONE, COMPLETED, CANCELLED
-  evaluationDate       DateTime               @default(now())
+  leadTechnician       User     @relation("TechnicianEvaluations", fields: [leadTechnicianId], references: [id])
+  status               String   @default("DRAFT") // DRAFT, IN_PROGRESS, TECHNICAL_DONE, COMPLETED, CANCELLED
+  evaluationDate       DateTime @default(now())
   observations         String?
-  technicianInstructed Boolean                @default(true) // Se os participantes receberam instrução prévia de uso/colocação
-  instructionNotes     String?                // Detalhes sobre a orientação técnica ou desvios de colocação observados
+  technicianInstructed Boolean  @default(true) // Se os participantes receberam instrução prévia de uso/colocação
+  instructionNotes     String? // Detalhes sobre a orientação técnica ou desvios de colocação observados
   createdById          String?
   updatedById          String?
 
   // Campos de Assinatura Digital e Homologação Formal
   signedAt             DateTime?
-  technicianSignature  String?                // Base64 PNG transparente recortado
+  technicianSignature  String? // Base64 PNG transparente recortado
   technicianSignerName String?
-  clientSignature      String?                // Base64 PNG transparente recortado
+  clientSignature      String? // Base64 PNG transparente recortado
   clientSignerName     String?
-  clientSignerRole     String?                // Cargo/Área (ex: Coordenador de SESMT, Eng. Segurança)
-  clientSignerDocument String?                // CPF, Registro ou Matrícula funcional
+  clientSignerRole     String? // Cargo/Área (ex: Coordenador de SESMT, Eng. Segurança)
+  clientSignerDocument String? // CPF, Registro ou Matrícula funcional
 
   // Rastreabilidade e Integração Odoo ERP (crm.lead / sale.order)
-  odooLeadId           Int?
-  odooOrderId          Int?
-  odooSyncStatus       String?                // PENDING, SYNCED, FAILED
-  odooSyncedAt         DateTime?
-  odooSyncError        String?
+  odooLeadId     Int?
+  odooOrderId    Int?
+  odooSyncStatus String? // PENDING, SYNCED, FAILED
+  odooSyncedAt   DateTime?
+  odooSyncError  String?
 
   participants         EvaluationParticipant[]
+  participantSignatures EvaluationParticipantSignature[]
   comparisons          EvaluationComparison[]
-  createdAt            DateTime               @default(now())
-  updatedAt            DateTime               @updatedAt
-  completedAt          DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt    DateTime                @updatedAt
+  completedAt  DateTime?
 
   @@map("evaluations")
 }
@@ -224,29 +226,48 @@ model AuditLog {
   userName    String?
   userEmail   String?
   userRole    String?
-  action      String   // CREATE, UPDATE, DELETE, COMPLETE, EMISSION, EXPORT_PDF
-  entity      String   // EVALUATION, COMPANY, USER
+  action      String // CREATE, UPDATE, DELETE, COMPLETE, EMISSION, EXPORT_PDF
+  entity      String // EVALUATION, COMPANY, USER
   entityId    String
-  details     String?  // JSON ou resumo legível dos detalhes/alterações
+  details     String? // JSON ou resumo legível dos detalhes/alterações
   ipAddress   String?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime   @default(now())
 
   @@index([alvesUserId])
   @@map("audit_logs")
 }
 
 model EvaluationParticipant {
-  id           String     @id @default(uuid())
-  evaluationId String
-  evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
-  name         String
-  roleOrArea   String     // Ex: Operador / Produção, Técnico Segurança, Compras
-  companyName  String?
-  email        String?
-  phone        String?
-  createdAt    DateTime   @default(now())
+  id                 String                        @id @default(uuid())
+  evaluationId       String
+  evaluation         Evaluation                    @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  name               String
+  roleOrArea         String // Ex: Operador / Produção, Técnico Segurança, Compras
+  companyName        String?
+  email              String?
+  phone              String?
+  createdAt          DateTime                      @default(now())
+  criterionResponses EvaluationCriterionResponse[]
+  signatures         EvaluationParticipantSignature[]
 
   @@map("evaluation_participants")
+}
+
+model EvaluationParticipantSignature {
+  id             String              @id @default(uuid())
+  evaluationId   String
+  evaluation     Evaluation          @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  participantId  String
+  participant    EvaluationParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  signature      String
+  signerName     String
+  signerRole     String
+  signerDocument String?
+  signedAt       DateTime          @default(now())
+
+  @@unique([evaluationId, participantId])
+  @@index([participantId])
+  @@map("evaluation_participant_signatures")
 }
 
 model EvaluationComparison {
@@ -259,7 +280,7 @@ model EvaluationComparison {
   competitorProduct    CompetitorProduct             @relation(fields: [competitorProductId], references: [id])
   orderIndex           Int                           @default(0)
   comparisonType       String                        @default("EQUIVALENCE") // EQUIVALENCE ou UPGRADE
-  upgradeJustification String?                       // Motivação do upgrade: maior durabilidade, tecnologia de vedação, conforto ergonômico, etc.
+  upgradeJustification String? // Motivação do upgrade: maior durabilidade, tecnologia de vedação, conforto ergonômico, etc.
   responses            EvaluationCriterionResponse[]
   economicResult       EvaluationEconomicResult?
   createdAt            DateTime                      @default(now())
@@ -268,46 +289,49 @@ model EvaluationComparison {
 }
 
 model EvaluationCriterionResponse {
-  id              String               @id @default(uuid())
+  id              String                 @id @default(uuid())
   comparisonId    String
-  comparison      EvaluationComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  comparison      EvaluationComparison   @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  participantId   String?
+  participant     EvaluationParticipant? @relation(fields: [participantId], references: [id], onDelete: Cascade)
   attributeId     String
-  attribute       TechnicalAttribute   @relation(fields: [attributeId], references: [id])
-  libusScore      Int?                 // 1 a 10
-  competitorScore Int?                 // 1 a 10
-  isNotApplicable Boolean              @default(false)
+  attribute       TechnicalAttribute     @relation(fields: [attributeId], references: [id])
+  libusScore      Int? // 1 a 10
+  competitorScore Int? // 1 a 10
+  isNotApplicable Boolean                @default(false)
   observation     String?
-  createdAt       DateTime             @default(now())
+  createdAt       DateTime               @default(now())
 
-  @@unique([comparisonId, attributeId])
+  @@unique([comparisonId, attributeId, participantId])
+  @@index([participantId])
   @@map("evaluation_criterion_responses")
 }
 
 model EvaluationEconomicResult {
-  id                 String               @id @default(uuid())
-  comparisonId       String               @unique
-  comparison         EvaluationComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
-  currentPrice       Float                // Preço concorrente
-  libusPrice         Float                // Preço Libus
-  quantity           Int                  @default(1) // Quantidade de usuários / postos
-  consumptionPeriod  String               @default("MONTHLY") // MONTHLY / ANNUAL
-  lifespanCurrent    Float                // Vida útil concorrente (em meses ou dias)
-  lifespanLibus      Float                // Vida útil Libus
-  costCurrentTotal   Float                // Custo total calculado concorrente
-  costLibusTotal     Float                // Custo total calculado Libus
-  costDifference     Float                // Custo atual - Custo Libus
-  economyGenerated   Float                // Economia bruta gerada
-  economyPercent     Float                // % de economia
+  id                    String               @id @default(uuid())
+  comparisonId          String               @unique
+  comparison            EvaluationComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  currentPrice          Float // Preço concorrente
+  libusPrice            Float // Preço Libus
+  quantity              Int                  @default(1) // Quantidade de usuários / postos
+  consumptionPeriod     String               @default("MONTHLY") // MONTHLY / ANNUAL
+  lifespanCurrent       Float // Vida útil concorrente (em meses ou dias)
+  lifespanLibus         Float // Vida útil Libus
+  costCurrentTotal      Float // Custo total calculado concorrente
+  costLibusTotal        Float // Custo total calculado Libus
+  costDifference        Float // Custo atual - Custo Libus
+  economyGenerated      Float // Economia bruta gerada
+  economyPercent        Float // % de economia
   // Custos e Impacto de Descarte & ESG
-  disposalCostPerUnit Float               @default(0) // Custo por descarte/troca (logística, MTR, resíduos)
-  productWeightGrams  Float               @default(0) // Peso médio unitário em gramas
-  disposalCostSavings Float               @default(0) // Economia gerada em descarte
-  wasteKgReduced      Float               @default(0) // Redução de lixo/resíduo gerado em Kg
-  unitsDiscardedCurrent Int               @default(0) // Unidades descartadas Concorrente
-  unitsDiscardedLibus   Int               @default(0) // Unidades descartadas Libus
-  totalAnnualSavings  Float               @default(0) // Economia Total (Aquisição + Descarte)
-  notes              String?
-  createdAt          DateTime             @default(now())
+  disposalCostPerUnit   Float                @default(0) // Custo por descarte/troca (logística, MTR, resíduos)
+  productWeightGrams    Float                @default(0) // Peso médio unitário em gramas
+  disposalCostSavings   Float                @default(0) // Economia gerada em descarte
+  wasteKgReduced        Float                @default(0) // Redução de lixo/resíduo gerado em Kg
+  unitsDiscardedCurrent Int                  @default(0) // Unidades descartadas Concorrente
+  unitsDiscardedLibus   Int                  @default(0) // Unidades descartadas Libus
+  totalAnnualSavings    Float                @default(0) // Economia Total (Aquisição + Descarte)
+  notes                 String?
+  createdAt             DateTime             @default(now())
 
   @@map("evaluation_economic_results")
 }
@@ -329,19 +353,19 @@ model AlvesUser {
 }
 
 model AlvesClient {
-  id            String          @id @default(uuid())
-  name          String
-  document      String          @default("")
-  phone         String          @default("")
-  whatsapp      String          @default("")
-  email         String          @default("")
-  address       Json
-  notes         String?
-  active        Boolean         @default(true)
-  proposals     AlvesProposal[]
-  contracts     AlvesContract[]
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id        String          @id @default(uuid())
+  name      String
+  document  String          @default("")
+  phone     String          @default("")
+  whatsapp  String          @default("")
+  email     String          @default("")
+  address   Json
+  notes     String?
+  active    Boolean         @default(true)
+  proposals AlvesProposal[]
+  contracts AlvesContract[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
 
   @@index([name])
   @@index([document])
@@ -349,28 +373,28 @@ model AlvesClient {
 }
 
 model AlvesProposal {
-  id                    String              @id @default(uuid())
-  number                String
-  version               Int                 @default(1)
-  originId              String?
-  origin                AlvesProposal?     @relation("AlvesProposalVersions", fields: [originId], references: [id])
-  versions              AlvesProposal[]    @relation("AlvesProposalVersions")
-  clientId              String
-  client                AlvesClient         @relation(fields: [clientId], references: [id])
-  projectName           String
-  workAddress           String
-  responsible           String
-  issueDate             DateTime
-  expirationDate        DateTime
-  status                String              @default("rascunho")
-  showRoomValues        Boolean             @default(true)
-  rooms                 Json
-  commercialConditions  Json
-  approval              Json?
-  publicToken           String              @unique
-  contracts             AlvesContract[]
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
+  id                   String          @id @default(uuid())
+  number               String
+  version              Int             @default(1)
+  originId             String?
+  origin               AlvesProposal?  @relation("AlvesProposalVersions", fields: [originId], references: [id])
+  versions             AlvesProposal[] @relation("AlvesProposalVersions")
+  clientId             String
+  client               AlvesClient     @relation(fields: [clientId], references: [id])
+  projectName          String
+  workAddress          String
+  responsible          String
+  issueDate            DateTime
+  expirationDate       DateTime
+  status               String          @default("rascunho")
+  showRoomValues       Boolean         @default(true)
+  rooms                Json
+  commercialConditions Json
+  approval             Json?
+  publicToken          String          @unique
+  contracts            AlvesContract[]
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   @@unique([number, version])
   @@index([status])
@@ -379,26 +403,26 @@ model AlvesProposal {
 }
 
 model AlvesContract {
-  id                 String        @id @default(uuid())
-  number             String        @unique
-  proposalId         String
-  proposal           AlvesProposal @relation(fields: [proposalId], references: [id])
-  proposalNumber     String
-  proposalVersion    Int
-  clientId           String
-  client             AlvesClient   @relation(fields: [clientId], references: [id])
-  projectName        String
-  workAddress        String
-  totalValue         Decimal       @db.Decimal(14, 2)
-  paymentTerms       String
-  deliveryDays       Int
-  warrantyMonths     Int
-  status             String        @default("aguardando_assinatura")
-  clauses            Json
-  publicToken        String        @unique
-  signature          Json?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  id              String        @id @default(uuid())
+  number          String        @unique
+  proposalId      String
+  proposal        AlvesProposal @relation(fields: [proposalId], references: [id])
+  proposalNumber  String
+  proposalVersion Int
+  clientId        String
+  client          AlvesClient   @relation(fields: [clientId], references: [id])
+  projectName     String
+  workAddress     String
+  totalValue      Decimal       @db.Decimal(14, 2)
+  paymentTerms    String
+  deliveryDays    Int
+  warrantyMonths  Int
+  status          String        @default("aguardando_assinatura")
+  clauses         Json
+  publicToken     String        @unique
+  signature       Json?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   @@index([clientId])
   @@index([proposalId])
@@ -406,12 +430,12 @@ model AlvesContract {
 }
 
 model AlvesConfiguration {
-  id                    String   @id @default("default")
-  companyData            Json
-  standardClauses        Json
-  version                Int      @default(1)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id              String   @id @default("default")
+  companyData     Json
+  standardClauses Json
+  version         Int      @default(1)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   @@map("alves_configurations")
 }

@@ -7,6 +7,7 @@ export interface User {
   email: string;
   role: 'ADMIN' | 'GESTOR' | 'TECNICO';
   mustChangePassword?: boolean;
+  signatureImage?: string | null;
 }
 
 interface AuthContextType {

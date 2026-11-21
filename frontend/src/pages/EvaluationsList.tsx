@@ -36,7 +36,7 @@ export const EvaluationsListPage: React.FC = () => {
 
   const loadData = async () => {
     try {
-      const data = await apiRequest('/evaluations');
+      const data = await apiRequest('/evaluations?summary=true');
       setEvaluations(data.evaluations || []);
     } catch (err) {
       console.error(err);
@@ -83,16 +83,17 @@ export const EvaluationsListPage: React.FC = () => {
         c.competitorProduct?.manufacturer?.name?.toLowerCase().includes(q)
       );
 
+    const isFullySigned = e.signatureStatus?.allSigned ?? e.status === 'COMPLETED';
     const matchesStatus =
       statusFilter === 'ALL' ||
-      (statusFilter === 'COMPLETED' && e.status === 'COMPLETED') ||
-      (statusFilter === 'IN_PROGRESS' && e.status !== 'COMPLETED');
+      (statusFilter === 'COMPLETED' && isFullySigned) ||
+      (statusFilter === 'IN_PROGRESS' && !isFullySigned);
 
     return matchesSearch && matchesStatus;
   });
 
-  const completedCount = evaluations.filter(e => e.status === 'COMPLETED').length;
-  const inProgressCount = evaluations.filter(e => e.status !== 'COMPLETED').length;
+  const completedCount = evaluations.filter(e => e.signatureStatus?.allSigned ?? e.status === 'COMPLETED').length;
+  const inProgressCount = evaluations.filter(e => !(e.signatureStatus?.allSigned ?? e.status === 'COMPLETED')).length;
 
   return (
     <div className="space-y-6">
@@ -222,7 +223,7 @@ export const EvaluationsListPage: React.FC = () => {
                         {ev.company?.cnpj || 'CNPJ não informado'}
                       </p>
                     </div>
-                    {ev.status === 'COMPLETED' ? (
+                    {(ev.signatureStatus?.allSigned ?? ev.status === 'COMPLETED') ? (
                       <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 font-mono flex-shrink-0">
                         <CheckCircle2 size={11} className="text-emerald-600" />
                         <span>{t.dashStatusCompleted}</span>
@@ -259,7 +260,7 @@ export const EvaluationsListPage: React.FC = () => {
                       className="inline-flex items-center gap-1 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold transition font-mono"
                     >
                       <FileCheck2 size={13} />
-                      <span>PDF</span>
+                      <span>Laudos</span>
                     </Link>
                     <Link
                       to={`/evaluations/${ev.id}`}
@@ -319,7 +320,7 @@ export const EvaluationsListPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        {ev.status === 'COMPLETED' ? (
+                        {(ev.signatureStatus?.allSigned ?? ev.status === 'COMPLETED') ? (
                           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 font-mono">
                             <CheckCircle2 size={13} className="text-emerald-600" />
                             <span>{t.dashStatusCompleted}</span>
@@ -342,7 +343,7 @@ export const EvaluationsListPage: React.FC = () => {
                             title="Visualizar e Imprimir Laudo Oficial"
                           >
                             <FileCheck2 size={13} />
-                            <span>PDF</span>
+                            <span>Laudos</span>
                           </Link>
                           <Link
                             to={`/evaluations/${ev.id}`}
