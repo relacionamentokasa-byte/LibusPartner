@@ -58,14 +58,19 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
   const [error, setError] = useState('');
   const [savingParticipant, setSavingParticipant] = useState(false);
 
+  // Reinicia os dados somente quando o modal abre (ou muda o laudo/participante),
+  // para que um re-render do laudo não apague a assinatura recém-desenhada.
   useEffect(() => {
+    if (!isOpen) return;
     setTechnicianName(defaultTechnicianName);
     setTechnicianSignature(defaultTechnicianSignature || user?.signatureImage || '');
     setSignatureDrafts(Object.fromEntries(
       participantSignatures.map(signature => [signature.participantId, signature])
     ));
     setActiveParticipantId(individualParticipantId || participants[0]?.id || '');
-  }, [defaultTechnicianName, defaultTechnicianSignature, participantSignatures, participants, user?.signatureImage]);
+    setError('');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, evaluationId, individualParticipantId]);
 
   if (!isOpen) return null;
 
@@ -94,13 +99,18 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
   };
 
   const saveActiveParticipantSignature = async () => {
+    if (!technicianSignature) {
+      setError('A assinatura do especialista responsável é obrigatória.');
+      setStep(1);
+      return false;
+    }
     if (!activeParticipant || !activeDraft?.signature) {
       setError('Capture a assinatura do responsável selecionado antes de salvar.');
-      return;
+      return false;
     }
     if (!activeDraft.signerName.trim() || !activeDraft.signerRole.trim()) {
       setError('Informe nome e cargo do responsável antes de salvar.');
-      return;
+      return false;
     }
     try {
       setSavingParticipant(true);
@@ -110,13 +120,17 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
           signature: activeDraft.signature,
           signerName: activeDraft.signerName.trim(),
           signerRole: activeDraft.signerRole.trim(),
-          signerDocument: activeDraft.signerDocument?.trim() || undefined
+          signerDocument: activeDraft.signerDocument?.trim() || undefined,
+          technicianSignature,
+          technicianSignerName: technicianName.trim()
         })
       });
       onSuccess(data.evaluation);
       setError('Assinatura salva. Selecione o próximo responsável.');
+      return true;
     } catch (err: any) {
       setError(err.message || 'Erro ao salvar assinatura do participante');
+      return false;
     } finally {
       setSavingParticipant(false);
     }
@@ -125,8 +139,8 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
   const handleSubmit = async () => {
     setError('');
     if (individualParticipantId) {
-      await saveActiveParticipantSignature();
-      if (activeDraft?.signature) onClose();
+      const saved = await saveActiveParticipantSignature();
+      if (saved) onClose();
       return;
     }
     if (!technicianSignature) {
@@ -251,7 +265,7 @@ export const HomologationSignatureModal: React.FC<HomologationSignatureModalProp
                 </div>
                 <div><label className="block text-xs font-bold uppercase tracking-wider text-slate-700 font-mono mb-1">Documento / Matrícula</label><input type="text" value={activeDraft?.signerDocument || ''} onChange={e => updateActiveDraft({ signerDocument: e.target.value })} className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 focus:bg-white focus:ring-2 focus:ring-libus-magenta/40 font-mono" placeholder="Ex: CREA 12345/D ou Matrícula 8821" /></div>
                 <SignaturePad label={`Assinatura de ${activeParticipant.name}`} subLabel="Assine com o dedo, caneta touch ou mouse" onSignatureChange={signature => updateActiveDraft({ signature })} />
-                <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-100"><div className="flex gap-2"><button type="button" onClick={() => setStep(1)} className="px-4 py-2.5 text-slate-600 hover:text-slate-900 text-xs font-mono font-bold uppercase transition">{t.modalBackStep1}</button><button type="button" disabled={savingParticipant || !activeDraft?.signature} onClick={saveActiveParticipantSignature} className="px-4 py-2.5 bg-libus-magenta hover:bg-libus-magentaHover disabled:bg-slate-300 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition">{savingParticipant ? 'Salvando...' : 'Salvar assinatura'}</button></div><button type="button" disabled={loading} onClick={handleSubmit} className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-lg hover:shadow-xl"><CheckCircle2 size={16} /><span>{loading ? t.modalSigningLoading : 'Homologar após todas as assinaturas'}</span></button></div>
+                <div className="flex flex-wrap justify-between items-center gap-2 pt-2 border-t border-slate-100"><div className="flex gap-2"><button type="button" onClick={() => setStep(1)} className="px-4 py-2.5 text-slate-600 hover:text-slate-900 text-xs font-mono font-bold uppercase transition">{t.modalBackStep1}</button><button type="button" disabled={savingParticipant || !activeDraft?.signature} onClick={individualParticipantId ? handleSubmit : saveActiveParticipantSignature} className="px-4 py-2.5 bg-libus-magenta hover:bg-libus-magentaHover disabled:bg-slate-300 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition">{savingParticipant ? 'Salvando...' : 'Salvar assinatura'}</button></div><button type="button" disabled={loading} onClick={handleSubmit} className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white rounded-xl text-xs font-mono font-bold uppercase tracking-wider transition flex items-center gap-2 shadow-lg hover:shadow-xl"><CheckCircle2 size={16} /><span>{loading ? t.modalSigningLoading : 'Homologar após todas as assinaturas'}</span></button></div>
               </>
             ) : <p className="text-sm text-slate-500">Cadastre pelo menos um responsável antes de homologar.</p>}
           </div>

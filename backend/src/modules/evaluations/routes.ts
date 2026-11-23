@@ -595,6 +595,12 @@ evaluationsRouter.patch('/:id/participant-signatures/:participantId', async (req
       participantId: req.params.participantId,
       ...req.body
     });
+    const technicianSignature = typeof req.body.technicianSignature === 'string' && req.body.technicianSignature.length > 10
+      ? req.body.technicianSignature
+      : undefined;
+    const technicianSignerName = typeof req.body.technicianSignerName === 'string' && req.body.technicianSignerName.trim()
+      ? req.body.technicianSignerName.trim()
+      : undefined;
     const evaluation = await prisma.evaluation.findUnique({
       where: { id: req.params.id },
       select: { id: true, leadTechnicianId: true }
@@ -608,6 +614,16 @@ evaluationsRouter.patch('/:id/participant-signatures/:participantId', async (req
     });
     if (!participant) return res.status(400).json({ error: 'Participante inválido para esta avaliação.' });
     await persistParticipantSignatures(evaluation.id, [input]);
+    if (technicianSignature) {
+      await prisma.evaluation.update({
+        where: { id: evaluation.id },
+        data: {
+          technicianSignature,
+          ...(technicianSignerName ? { technicianSignerName } : {}),
+          updatedById: user.id
+        }
+      });
+    }
     const updated = await prisma.evaluation.findUnique({
       where: { id: evaluation.id },
       include: { participants: true, participantSignatures: true }
