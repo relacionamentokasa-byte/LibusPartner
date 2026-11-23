@@ -44,6 +44,8 @@ export const EvaluationExecutionPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [comparisonToRemove, setComparisonToRemove] = useState<any>(null);
+  const [removingComparison, setRemovingComparison] = useState(false);
 
   // Estado do Modal de Homologação com Termo de Orientação Técnica (NR-6)
   const [showCompleteModal, setShowCompleteModal] = useState(false);
@@ -347,6 +349,29 @@ export const EvaluationExecutionPage: React.FC = () => {
     }
   };
 
+  const handleRemoveComparison = async () => {
+    if (!comparisonToRemove) return;
+    try {
+      setRemovingComparison(true);
+      await apiRequest(`/evaluations/comparisons/${comparisonToRemove.id}`, { method: 'DELETE' });
+      const removedIndex = evaluation.comparisons.findIndex((comp: any) => comp.id === comparisonToRemove.id);
+      setEvaluation({
+        ...evaluation,
+        comparisons: evaluation.comparisons.filter((comp: any) => comp.id !== comparisonToRemove.id)
+      });
+      setActiveComparisonIndex(current => {
+        if (removedIndex < 0) return current;
+        if (current > removedIndex) return current - 1;
+        return Math.max(0, Math.min(current, evaluation.comparisons.length - 2));
+      });
+      setComparisonToRemove(null);
+    } catch (err: any) {
+      alert(err.message || 'Erro ao remover par comparativo');
+    } finally {
+      setRemovingComparison(false);
+    }
+  };
+
   if (loading || !evaluation) {
     return <div className="p-16 text-center text-xs font-mono text-slate-400">Carregando bancada técnica...</div>;
   }
@@ -508,11 +533,12 @@ export const EvaluationExecutionPage: React.FC = () => {
         {evaluation.comparisons?.map((comp: any, idx: number) => {
           const isActive = idx === activeComparisonIndex;
           const supPercent = comp.technicalResult?.libusSuperiorityPercent ?? 0;
+          const canRemoveComparison = evaluation.status !== 'COMPLETED' && evaluation.comparisons.length > 1;
           return (
+            <div key={comp.id} className="relative flex-shrink-0">
             <button
-              key={comp.id}
               onClick={() => setActiveComparisonIndex(idx)}
-              className={`flex-shrink-0 p-4 rounded-2xl border text-left transition flex items-center gap-4 ${
+              className={`p-4 ${canRemoveComparison ? 'pr-12' : ''} rounded-2xl border text-left transition flex items-center gap-4 ${
                 isActive
                   ? 'border-libus-magenta bg-white shadow-md ring-2 ring-pink-500/20'
                   : 'border-slate-200/80 bg-white/60 hover:bg-white text-slate-600'
@@ -587,6 +613,18 @@ export const EvaluationExecutionPage: React.FC = () => {
                 </div>
               )}
             </button>
+            {canRemoveComparison && (
+              <button
+                type="button"
+                onClick={() => setComparisonToRemove(comp)}
+                title="Remover este par comparativo"
+                aria-label={`Remover par ${comp.libusProduct?.name} x ${comp.competitorProduct?.name}`}
+                className="absolute top-2 right-2 w-7 h-7 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-transparent hover:border-rose-200 transition"
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
+            </div>
           );
         })}
       </div>
@@ -1444,6 +1482,48 @@ export const EvaluationExecutionPage: React.FC = () => {
               >
                 <Trash2 size={13} />
                 <span>{deleting ? 'Excluindo...' : 'Sim, Excluir Laudo'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Remoção de Par Comparativo */}
+      {comparisonToRemove && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center gap-3 text-rose-600 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle size={20} />
+              </div>
+              <div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-rose-600">CONFIRMAÇÃO DE SEGURANÇA</span>
+                <h3 className="text-base font-black text-slate-900">Remover este par comparativo?</h3>
+              </div>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Você vai remover o par <strong className="text-slate-900">{comparisonToRemove.libusProduct?.name} x {comparisonToRemove.competitorProduct?.name}</strong> desta avaliação.
+</p>
+            <p className="text-[11px] text-slate-500 mt-2 bg-slate-50 p-2.5 rounded-lg border border-slate-200 font-mono">
+              As notas de todos os participantes e a análise econômica deste par serão removidas permanentemente. Os demais pares e as assinaturas não são alterados.
+            </p>
+            <div className="flex justify-end gap-3 pt-5 mt-4 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setComparisonToRemove(null)}
+                disabled={removingComparison}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleRemoveComparison}
+                disabled={removingComparison}
+                className="px-5 py-2 bg-rose-600 hover:bg-rose-700 disabled:bg-slate-300 text-white text-xs font-bold rounded-xl shadow-md transition font-mono uppercase tracking-wider flex items-center gap-2"
+              >
+                <Trash2 size={13} />
+                <span>{removingComparison ? 'Removendo...' : 'Sim, Remover Par'}</span>
               </button>
             </div>
           </div>

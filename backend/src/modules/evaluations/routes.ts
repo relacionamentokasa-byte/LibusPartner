@@ -860,6 +860,65 @@ evaluationsRouter.post('/:id/audit-emission', async (req: Request, res: Response
   }
 });
 
+// Remover um par comparativo (produto) de uma avaliação em andamento
+evaluationsRouter.delete('/comparisons/:comparisonId', async (req: Request, res: Response) => {
+  try {
+    const user = req.user!;
+    const comparison = await prisma.evaluationComparison.findUnique({
+      where: { id: req.params.comparisonId },
+      include: {
+        libusProduct: { select: { name: true } },
+        competitorProduct: { select: { name: true } },
+        evaluation: { select: { id: true, status: true, leadTechnicianId: true } }
+      }
+    });
+    if (!comparison) return res.status(404).json({ error: 'Par comparativo não encontrado' });
+
+    const { evaluation } = comparison;
+    if (user.role !== 'ADMIN' && evaluation.leadTechnicianId !== user.id) {
+      return res.status(403).json({ error: 'Apenas o Administrador ou o técnico responsável pode remover um par comparativo.' });
+    }
+    if (evaluation.status === 'COMPLETED') {
+      return res.status(409).json({ error: 'Esta avaliação já foi homologada e não pode ter pares removidos.' });
+    }
+
+    const remaining = await prisma.evaluationComparison.findMany({
+      where: { evaluationId: evaluation.id, id: { not: comparison.id } },
+      orderBy: { orderIndex: 'asc' },
+      select: { id: true }
+    });
+    if (remaining.length === 0) {
+      return res.status(400).json({ error: 'Este é o único par da avaliação. Exclua a avaliação inteira para cancelá-la.' });
+    }
+
+    await createAuditLog({
+      user,
+      action: 'UPDATE',
+      entity: 'EVALUATION',
+      entityId: evaluation.id,
+      details: {
+        removedComparisonId: comparison.id,
+        libusProduct: comparison.libusProduct?.name,
+        competitorProduct: comparison.competitorProduct?.name
+      },
+      ipAddress: req.ip
+    });
+
+    // Respostas e resultado econômico são removidos em cascata.
+    await prisma.$transaction([
+      prisma.evaluationComparison.delete({ where: { id: comparison.id } }),
+      ...remaining.map((item, index) =>
+        prisma.evaluationComparison.update({ where: { id: item.id }, data: { orderIndex: index } })
+      )
+    ]);
+
+    return res.json({ success: true, removedComparisonId: comparison.id });
+  } catch (err: any) {
+    console.error(err);
+    return res.status(500).json({ error: 'Erro ao remover par comparativo' });
+  }
+});
+
 // Excluir Avaliação
 evaluationsRouter.delete('/:id', async (req: Request, res: Response) => {
   try {
