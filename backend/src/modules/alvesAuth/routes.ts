@@ -7,9 +7,11 @@ import { alvesAuthMiddleware, isAlvesRole, signAlvesToken } from '../../middlewa
 
 export const alvesAuthRouter = Router();
 
+const hashResetToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
+
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
-  password: z.string().min(4, 'Senha deve ter pelo menos 4 caracteres')
+  password: z.string().min(1, 'Senha é obrigatória')
 });
 
 const publicUser = (user: { id: string; name: string; email: string; role: string }) => ({
@@ -52,7 +54,7 @@ alvesAuthRouter.post('/forgot-password', async (req: Request, res: Response) => 
       await prisma.alvesUser.update({
         where: { id: user.id },
         data: {
-          resetPasswordToken: crypto.randomBytes(32).toString('hex'),
+          resetPasswordToken: hashResetToken(crypto.randomBytes(32).toString('hex')),
           resetPasswordExpires: new Date(Date.now() + 3600000)
         }
       });
@@ -65,16 +67,21 @@ alvesAuthRouter.post('/forgot-password', async (req: Request, res: Response) => 
   }
 });
 
+const alvesPasswordSchema = z.string()
+  .min(8, 'A senha deve ter pelo menos 8 caracteres')
+  .regex(/[A-Za-z]/, 'A senha deve conter pelo menos uma letra')
+  .regex(/[0-9]/, 'A senha deve conter pelo menos um número');
+
 const resetPasswordSchema = z.object({
   token: z.string().min(1),
-  newPassword: z.string().min(4, 'Nova senha deve ter pelo menos 4 caracteres')
+  newPassword: alvesPasswordSchema
 });
 
 alvesAuthRouter.post('/reset-password-with-token', async (req: Request, res: Response) => {
   try {
     const { token, newPassword } = resetPasswordSchema.parse(req.body);
     const user = await prisma.alvesUser.findFirst({
-      where: { resetPasswordToken: token, resetPasswordExpires: { gt: new Date() }, active: true }
+      where: { resetPasswordToken: hashResetToken(token), resetPasswordExpires: { gt: new Date() }, active: true }
     });
     if (!user) return res.status(400).json({ error: 'O link de recuperação Alves é inválido ou expirou.' });
 
@@ -91,8 +98,10 @@ alvesAuthRouter.post('/reset-password-with-token', async (req: Request, res: Res
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(4, 'Nova senha deve ter pelo menos 4 caracteres')
+  newPassword: alvesPasswordSchema
 });
+
+// A senha do usuário Alves deve seguir a mesma política mínima do Partner.
 
 alvesAuthRouter.post('/change-password', alvesAuthMiddleware, async (req: Request, res: Response) => {
   try {

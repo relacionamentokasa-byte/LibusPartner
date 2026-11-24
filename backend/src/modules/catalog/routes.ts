@@ -1,9 +1,21 @@
 import { Router, Request, Response } from 'express';
+import path from 'node:path';
 import { prisma } from '../../lib/prisma.js';
 import { authMiddleware, roleMiddleware } from '../../middlewares/auth.js';
 
 export const catalogRouter = Router();
 catalogRouter.use(authMiddleware);
+
+const safeProductFileId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 80);
+const allowedImageMimeTypes = new Set(['png', 'jpeg', 'webp']);
+const maxImageBase64Length = 6_000_000;
+
+function parseUploadedImage(value: unknown): { extension: string; buffer: Buffer } | null {
+  if (typeof value !== 'string' || value.length > maxImageBase64Length) return null;
+  const match = value.match(/^data:image\/(png|jpeg|webp);base64,([A-Za-z0-9+/=]+)$/i);
+  if (!match || !allowedImageMimeTypes.has(match[1].toLowerCase())) return null;
+  return { extension: match[1].toLowerCase() === 'jpeg' ? 'jpg' : match[1].toLowerCase(), buffer: Buffer.from(match[2], 'base64') };
+}
 
 // Famílias e Categorias
 catalogRouter.get('/families', async (req: Request, res: Response) => {
@@ -182,14 +194,12 @@ catalogRouter.patch('/libus-products/:id/image', roleMiddleware(['ADMIN', 'GESTO
     if (imageBase64) {
       // Salvar arquivo físico com fundo transparente se enviado via base64
       const fs = await import('fs');
-      const path = await import('path');
       const { Jimp } = await import('jimp');
-
-      const matches = imageBase64.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
-      if (matches) {
-        const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1];
-        const buffer = Buffer.from(matches[2], 'base64');
-        const filename = `custom_libus_${id}_${Date.now()}.png`;
+      const uploaded = parseUploadedImage(imageBase64);
+      if (!uploaded) return res.status(400).json({ error: 'Imagem inválida. Envie PNG, JPEG ou WebP dentro do limite permitido.' });
+      {
+        const buffer = uploaded.buffer;
+        const filename = `custom_libus_${safeProductFileId(id)}_${Date.now()}.png`;
         const targetPath = path.join(process.cwd(), '..', 'frontend', 'public', 'products', filename);
         const localPath = path.join(process.cwd(), 'frontend', 'public', 'products', filename);
         const savePath = fs.existsSync(path.dirname(targetPath)) ? targetPath : localPath;
@@ -239,13 +249,12 @@ catalogRouter.patch('/competitor-products/:id/image', roleMiddleware(['ADMIN', '
 
     if (imageBase64) {
       const fs = await import('fs');
-      const path = await import('path');
       const { Jimp } = await import('jimp');
-
-      const matches = imageBase64.match(/^data:image\/([a-zA-Z0-9+]+);base64,(.+)$/);
-      if (matches) {
-        const buffer = Buffer.from(matches[2], 'base64');
-        const filename = `custom_comp_${id}_${Date.now()}.png`;
+      const uploaded = parseUploadedImage(imageBase64);
+      if (!uploaded) return res.status(400).json({ error: 'Imagem inválida. Envie PNG, JPEG ou WebP dentro do limite permitido.' });
+      {
+        const buffer = uploaded.buffer;
+        const filename = `custom_comp_${safeProductFileId(id)}_${Date.now()}.png`;
         const targetPath = path.join(process.cwd(), '..', 'frontend', 'public', 'products', filename);
         const localPath = path.join(process.cwd(), 'frontend', 'public', 'products', filename);
         const savePath = fs.existsSync(path.dirname(targetPath)) ? targetPath : localPath;

@@ -4,7 +4,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma.js';
-import { authMiddleware, getJwtSecret } from '../../middlewares/auth.js';
+import { authMiddleware, getJwtSecret, jwtOptions } from '../../middlewares/auth.js';
 import { sendResetPasswordEmail } from '../../lib/email.js';
 import { createAuditLog } from '../../lib/audit.js';
 
@@ -14,6 +14,8 @@ const passwordSchema = z.string()
   .min(8, 'A senha deve ter pelo menos 8 caracteres')
   .regex(/[A-Za-z]/, 'A senha deve conter pelo menos uma letra')
   .regex(/[0-9]/, 'A senha deve conter pelo menos um número');
+
+const hashResetToken = (token: string) => crypto.createHash('sha256').update(token).digest('hex');
 
 const loginSchema = z.object({
   email: z.string().email('E-mail inválido'),
@@ -46,7 +48,8 @@ authRouter.post('/login', async (req: Request, res: Response) => {
     };
 
     const token = jwt.sign(payload, getJwtSecret(), {
-      expiresIn: '7d'
+      ...jwtOptions,
+      expiresIn: '2h'
     });
 
     return res.json({
@@ -58,10 +61,7 @@ authRouter.post('/login', async (req: Request, res: Response) => {
       return res.status(400).json({ error: err.errors[0].message });
     }
     console.error('Erro detalhado no login:', err);
-    return res.status(500).json({
-      error: 'Erro interno ao autenticar',
-      details: err?.message || String(err)
-    });
+    return res.status(500).json({ error: 'Erro interno ao autenticar' });
   }
 });
 
@@ -130,7 +130,7 @@ authRouter.post('/forgot-password', async (req: Request, res: Response) => {
     await prisma.user.update({
       where: { id: user.id },
       data: {
-        resetPasswordToken: resetToken,
+        resetPasswordToken: hashResetToken(resetToken),
         resetPasswordExpires
       }
     });
@@ -169,7 +169,7 @@ authRouter.post('/forgot-password', async (req: Request, res: Response) => {
 // Validação e Definição da Nova Senha via Token
 const resetPasswordWithTokenSchema = z.object({
   token: z.string().min(1, 'Token de recuperação é obrigatório'),
-  newPassword: z.string().min(4, 'Nova senha deve ter pelo menos 4 caracteres')
+  newPassword: passwordSchema
 });
 
 authRouter.post('/reset-password-with-token', async (req: Request, res: Response) => {
@@ -178,7 +178,7 @@ authRouter.post('/reset-password-with-token', async (req: Request, res: Response
 
     const user = await prisma.user.findFirst({
       where: {
-        resetPasswordToken: token,
+        resetPasswordToken: hashResetToken(token),
         resetPasswordExpires: {
           gt: new Date()
         }

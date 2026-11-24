@@ -28,9 +28,9 @@ const ALVES_JWT_AUDIENCE = 'alves-planejados-web';
 
 export function getAlvesJwtSecret(): string {
   const secret = process.env.ALVES_JWT_SECRET;
-  if (!secret || secret === 'secret' || secret.length < 16) {
+  if (!secret || secret === 'secret' || secret.length < 32) {
     if (process.env.NODE_ENV === 'production') {
-      throw new Error('FATAL: ALVES_JWT_SECRET seguro é obrigatório em ambiente de produção (mínimo 16 caracteres).');
+      throw new Error('FATAL: ALVES_JWT_SECRET seguro é obrigatório em ambiente de produção (mínimo 32 caracteres).');
     }
     return 'alves_planejados_dev_fallback_secret_2026';
   }
@@ -39,7 +39,7 @@ export function getAlvesJwtSecret(): string {
 
 export function signAlvesToken(user: AlvesAuthenticatedUser): string {
   return jwt.sign(user, getAlvesJwtSecret(), {
-    expiresIn: '7d',
+    expiresIn: '2h',
     issuer: ALVES_JWT_ISSUER,
     audience: ALVES_JWT_AUDIENCE
   });

@@ -18,13 +18,18 @@ declare global {
   }
 }
 
+const JWT_ISSUER = 'libus-partner';
+const JWT_AUDIENCE = 'libus-partner-web';
+
 export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET;
-  if (process.env.NODE_ENV === 'production' && (!secret || secret === 'secret' || secret.length < 16)) {
-    throw new Error('FATAL: JWT_SECRET seguro é obrigatório em ambiente de produção (mínimo 16 caracteres).');
+  if (process.env.NODE_ENV === 'production' && (!secret || secret === 'secret' || secret.length < 32)) {
+    throw new Error('FATAL: JWT_SECRET seguro é obrigatório em ambiente de produção (mínimo 32 caracteres).');
   }
   return secret || 'libus_partner_dev_fallback_secret_key_2024';
 }
+
+export const jwtOptions = { issuer: JWT_ISSUER, audience: JWT_AUDIENCE };
 
 export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
@@ -39,7 +44,7 @@ export async function authMiddleware(req: Request, res: Response, next: NextFunc
 
   const token = parts[1];
   try {
-    const decoded = jwt.verify(token, getJwtSecret()) as AuthenticatedUser;
+    const decoded = jwt.verify(token, getJwtSecret(), jwtOptions) as AuthenticatedUser;
 
     // Validação em tempo real no banco: bloqueia imediatamente técnicos desativados
     const user = await prisma.user.findUnique({
