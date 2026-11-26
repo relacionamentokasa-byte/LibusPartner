@@ -1261,7 +1261,7 @@ export const EvaluationExecutionPage: React.FC = () => {
 
             <button
               onClick={handleSaveEconomic}
-              disabled={saving || !activeParticipantId}
+              disabled={saving}
               className="px-6 py-3 bg-gradient-to-r from-libus-magenta to-libus-magentaHover hover:brightness-105 text-white font-bold rounded-xl text-xs shadow-lg hover:shadow-pink-500/20 flex items-center justify-center gap-2 transition uppercase tracking-wider font-mono"
             >
               <Save size={14} /> {t.tcoCalculateBtn}
