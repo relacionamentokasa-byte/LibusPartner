@@ -1,0 +1,236 @@
+{
+  "generatedAt": "2026-11-26T22:01:47.049Z",
+  "source": "Odoo public page / Google Drive inventory already present in project",
+  "totalRules": 27,
+  "matched": 20,
+  "downloaded": 19,
+  "items": [
+    {
+      "name": "genesis",
+      "matched": true,
+      "sourceFile": "casco-seguridad-genesis-amarillo-01.png",
+      "sourceFolder": "Linha Genesis",
+      "fileId": "1duIjFO-cD9jZFIjQY9hkOTckGJCsg8g9",
+      "url": "https://lh3.googleusercontent.com/d/1duIjFO-cD9jZFIjQY9hkOTckGJCsg8g9=w800",
+      "localFile": "genesis.png",
+      "bytes": 5034406
+    },
+    {
+      "name": "andes",
+      "matched": true,
+      "sourceFile": "casco-altura-andes-amarillo-01.png",
+      "sourceFolder": "Andes",
+      "fileId": "1nKaxGWE5l4ozfNVIPkUdG2aCleCe8tl5",
+      "url": "https://lh3.googleusercontent.com/d/1nKaxGWE5l4ozfNVIPkUdG2aCleCe8tl5=w800",
+      "localFile": "andes.png",
+      "bytes": 1312254
+    },
+    {
+      "name": "milenium",
+      "matched": true,
+      "sourceFile": "casco-seguridad-milenium-full-brim-con-slot-amarillo-01.PNG",
+      "sourceFolder": "Full Brim com Slot",
+      "fileId": "1HT8tBKcevsWznmVoBD-tj7GaFYlrnvc2",
+      "url": "https://lh3.googleusercontent.com/d/1HT8tBKcevsWznmVoBD-tj7GaFYlrnvc2=w800",
+      "localFile": "milenium.png",
+      "bytes": 5045415
+    },
+    {
+      "name": "milenium_class",
+      "matched": true,
+      "sourceFile": "casco-seguridad-milenium-class-slot-blanco-mentonera-3-puntos-01.png",
+      "sourceFolder": "Jugular",
+      "fileId": "1cWPCsJ6kstOJ8fIYuGwNTSWVU6jGPDP4",
+      "url": "https://lh3.googleusercontent.com/d/1cWPCsJ6kstOJ8fIYuGwNTSWVU6jGPDP4=w800",
+      "localFile": "milenium_class.png",
+      "bytes": 8735921
+    },
+    {
+      "name": "bone",
+      "matched": true,
+      "sourceFile": "bone-brasil-azul-con-extensión-cuello-01.png",
+      "sourceFolder": "Boné",
+      "fileId": "1zyIJ7u-YdXtB3m-U1U7NoRqRBBw8OZXY",
+      "url": "https://lh3.googleusercontent.com/d/1zyIJ7u-YdXtB3m-U1U7NoRqRBBw8OZXY=w800",
+      "localFile": "bone.png",
+      "bytes": 13728122
+    },
+    {
+      "name": "quantum",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-quantum-03.png",
+      "sourceFolder": "Linha Quatum",
+      "fileId": "1jPqPLqEwAHO9bVzzH8N4dMIR4Ir_GImO",
+      "url": "https://lh3.googleusercontent.com/d/1jPqPLqEwAHO9bVzzH8N4dMIR4Ir_GImO=w800",
+      "localFile": "quantum.png",
+      "bytes": 4566480
+    },
+    {
+      "name": "quantum_foam",
+      "matched": true,
+      "sourceFile": "protector-auditivo-quantum-foam-rd-con-cordel-01.png",
+      "sourceFolder": "Linha Quantum Foam",
+      "fileId": "1wYHMa3WTiBzJP5jbEHGdDzhFRLApFfAw",
+      "url": "https://lh3.googleusercontent.com/d/1wYHMa3WTiBzJP5jbEHGdDzhFRLApFfAw=w800",
+      "localFile": "quantum_foam.png",
+      "bytes": 3872852
+    },
+    {
+      "name": "l320v",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-l320-vincha-001.PNG",
+      "sourceFolder": "Linha 300",
+      "fileId": "15D02HRW9zjWTp_2wW2O0GZsChW-uL-HL",
+      "url": "https://lh3.googleusercontent.com/d/15D02HRW9zjWTp_2wW2O0GZsChW-uL-HL=w800",
+      "localFile": "l320v.png",
+      "bytes": 12950420
+    },
+    {
+      "name": "l340v",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-l340-vincha-001.PNG",
+      "sourceFolder": "Linha 300",
+      "fileId": "1tshPZtYDGqg3xLAL-NjpLLneksdnG3xy",
+      "url": "https://lh3.googleusercontent.com/d/1tshPZtYDGqg3xLAL-NjpLLneksdnG3xy=w800",
+      "localFile": "l340v.png",
+      "bytes": 15160791
+    },
+    {
+      "name": "l360v",
+      "matched": false
+    },
+    {
+      "name": "l320c",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-l320-casco-001.png",
+      "sourceFolder": "Linha 300",
+      "fileId": "1outUWuRzIcmR1jgXXc9dtESfuDvj3m0I",
+      "url": "https://lh3.googleusercontent.com/d/1outUWuRzIcmR1jgXXc9dtESfuDvj3m0I=w800",
+      "localFile": "l320c.png",
+      "bytes": 11776208
+    },
+    {
+      "name": "l340c",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-l340-casco-001.PNG",
+      "sourceFolder": "Linha 300",
+      "fileId": "1FLpcn6UW7K5gxIywgEezlR68jFERPz2k",
+      "url": "https://lh3.googleusercontent.com/d/1FLpcn6UW7K5gxIywgEezlR68jFERPz2k=w800",
+      "localFile": "l340c.png",
+      "bytes": 14675636
+    },
+    {
+      "name": "l360c",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-l360-casco-001.png",
+      "sourceFolder": "Linha 300",
+      "fileId": "13LDxBP79vBkcV1R7I_069_-nAHMW4BON",
+      "url": "https://lh3.googleusercontent.com/d/13LDxBP79vBkcV1R7I_069_-nAHMW4BON=w800",
+      "localFile": "l360c.png",
+      "bytes": 13239174
+    },
+    {
+      "name": "alternative",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-alternative-clean-vincha-001.PNG",
+      "sourceFolder": "Linha Alternative",
+      "fileId": "1BNuXeQ_aqewkGk93a-qtZQd4Ip_15XSj",
+      "url": "https://lh3.googleusercontent.com/d/1BNuXeQ_aqewkGk93a-qtZQd4Ip_15XSj=w800",
+      "localFile": "alternative.png",
+      "bytes": 4841814
+    },
+    {
+      "name": "new_alternative",
+      "matched": true,
+      "sourceFile": "proteccion-auditiva-new-alternative-01.png",
+      "sourceFolder": "Linha New Alternative",
+      "fileId": "1-B0lDIMDBSA1w4ik6_E2geTFCOhFRFDj",
+      "url": "https://lh3.googleusercontent.com/d/1-B0lDIMDBSA1w4ik6_E2geTFCOhFRFDj=w800",
+      "localFile": "new_alternative.png",
+      "bytes": 2098854
+    },
+    {
+      "name": "argon",
+      "matched": true,
+      "sourceFile": "anteojo-seguridad-argon-amarillo-01.PNG",
+      "sourceFolder": "Classic Line",
+      "fileId": "1DkunglID2VHLjlrjHtiAx4c7YVupu9eB",
+      "url": "https://lh3.googleusercontent.com/d/1DkunglID2VHLjlrjHtiAx4c7YVupu9eB=w800",
+      "localFile": "argon.png",
+      "bytes": 7460048
+    },
+    {
+      "name": "argon_elite",
+      "matched": true,
+      "sourceFile": "anteojo-seguridad-argon-elite-amarillo-01.png",
+      "sourceFolder": "Classic Line",
+      "fileId": "1-dA_cwTuFbXeiDCCdK9ExcL9ehr_aDnl",
+      "url": "https://lh3.googleusercontent.com/d/1-dA_cwTuFbXeiDCCdK9ExcL9ehr_aDnl=w800",
+      "localFile": "argon_elite.png",
+      "bytes": 8328164
+    },
+    {
+      "name": "ecoline",
+      "matched": false
+    },
+    {
+      "name": "neon",
+      "matched": false
+    },
+    {
+      "name": "mig",
+      "matched": false
+    },
+    {
+      "name": "eco_sport",
+      "matched": true,
+      "sourceFile": "anteojo-seguridad-eco-sport-gris-01.png",
+      "sourceFolder": "Sport Line",
+      "fileId": "1cyLrbsT4EdjGMmUbGTXPmWdK55FeOKyK",
+      "url": "https://lh3.googleusercontent.com/d/1cyLrbsT4EdjGMmUbGTXPmWdK55FeOKyK=w800",
+      "localFile": "eco_sport.png",
+      "bytes": 5318260
+    },
+    {
+      "name": "new_classic",
+      "matched": false
+    },
+    {
+      "name": "aviator",
+      "matched": true,
+      "sourceFile": "antiparra-seguridad-aviator-gris-gris-01 (1).png",
+      "sourceFolder": "Antiparras",
+      "fileId": "1AbB6c56Ah-SLDVAfwO-UEIpj956I_vTM",
+      "url": "https://lh3.googleusercontent.com/d/1AbB6c56Ah-SLDVAfwO-UEIpj956I_vTM=w800",
+      "downloadError": "HTTP 404"
+    },
+    {
+      "name": "facial_bolha",
+      "matched": true,
+      "sourceFile": "proteccion-facial-burbuja-amarillo-001.png",
+      "sourceFolder": "Faciais",
+      "fileId": "1xgh-6g0X_-mkimEPn032_PHK5UArhpV0",
+      "url": "https://lh3.googleusercontent.com/d/1xgh-6g0X_-mkimEPn032_PHK5UArhpV0=w800",
+      "localFile": "facial_bolha.png",
+      "bytes": 5866388
+    },
+    {
+      "name": "facial_plano",
+      "matched": false
+    },
+    {
+      "name": "facial_tela",
+      "matched": true,
+      "sourceFile": "proteccion-facial-malla-forestal-001.png",
+      "sourceFolder": "Malhas",
+      "fileId": "13x-g5BQ30ZJzTr2qKdzcPchsK0oCdYmL",
+      "url": "https://lh3.googleusercontent.com/d/13x-g5BQ30ZJzTr2qKdzcPchsK0oCdYmL=w800",
+      "localFile": "facial_tela.png",
+      "bytes": 25351030
+    },
+    {
+      "name": "facial_cilindrico",
+      "matched": false
+    }
+  ]
+}
